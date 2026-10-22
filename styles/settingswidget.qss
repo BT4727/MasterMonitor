@@ -1,0 +1,123 @@
+/* 系统设置页：沿用主页面的浅灰背景、白色控件和青蓝强调色。 */
+SettingsWidget {
+    background-color: #eef2f6;
+}
+
+SettingsWidget QLabel,
+SettingsWidget QLineEdit,
+SettingsWidget QComboBox,
+SettingsWidget QPushButton {
+    font-family: "Microsoft YaHei", "Segoe UI";
+    font-size: 14px;
+    color: #203047;
+}
+
+SettingsWidget QLabel {
+    background-color: transparent;
+    border: none;
+}
+
+SettingsWidget QLabel#settingsTitle {
+    color: #16334b;
+    font-size: 30px;
+    font-weight: 700;
+}
+
+SettingsWidget QLineEdit,
+SettingsWidget QComboBox {
+    background-color: #ffffff;
+    border: 1px solid #d4dee8;
+    border-radius: 7px;
+    min-height: 22px;
+    padding: 6px 10px;
+    selection-background-color: #087f94;
+    selection-color: #ffffff;
+}
+
+SettingsWidget QLineEdit:hover,
+SettingsWidget QComboBox:hover {
+    border-color: #78c7d3;
+}
+
+SettingsWidget QLineEdit:focus,
+SettingsWidget QComboBox:focus,
+SettingsWidget QComboBox:on {
+    border-color: #087f94;
+}
+
+SettingsWidget QComboBox {
+    padding-right: 30px;
+}
+
+SettingsWidget QComboBox::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 26px;
+    border-left: 1px solid #dbe3eb;
+    border-top-right-radius: 7px;
+    border-bottom-right-radius: 7px;
+}
+
+SettingsWidget QComboBox::drop-down:hover {
+    background-color: #e5f4f6;
+}
+
+SettingsWidget QComboBox QAbstractItemView {
+    font-family: "Microsoft YaHei", "Segoe UI";
+    font-size: 14px;
+    color: #31465d;
+    background-color: #ffffff;
+    border: 1px solid #b9c9d8;
+    padding: 4px;
+    outline: 0;
+    selection-color: #ffffff;
+    selection-background-color: #087f94;
+}
+
+SettingsWidget QComboBox QAbstractItemView::item {
+    min-height: 28px;
+    padding: 3px 6px;
+}
+
+SettingsWidget QPushButton {
+    color: #31465d;
+    background-color: #ffffff;
+    border: 1px solid #d4dee8;
+    border-radius: 8px;
+    min-width: 64px;
+    min-height: 22px;
+    padding: 8px 16px;
+    font-weight: 500;
+}
+
+SettingsWidget QPushButton:hover {
+    color: #087c91;
+    background-color: #f0fbfd;
+    border-color: #78c7d3;
+}
+
+SettingsWidget QPushButton:pressed {
+    background-color: #d6eef3;
+    border-color: #2196aa;
+}
+
+SettingsWidget QPushButton:focus {
+    border-color: #148ca6;
+}
+
+SettingsWidget QPushButton#saveSettingsButton {
+    color: #ffffff;
+    background-color: #087f94;
+    border-color: #087f94;
+    font-weight: 600;
+}
+
+SettingsWidget QPushButton#saveSettingsButton:hover {
+    background-color: #096f82;
+    border-color: #096f82;
+}
+
+SettingsWidget QPushButton#saveSettingsButton:pressed {
+    background-color: #085e6f;
+    border-color: #085e6f;
+}

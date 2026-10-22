@@ -1,0 +1,276 @@
+/*
+ * MainWidget / 智能监控系统
+ * 浅色工作台，青蓝色强调；适配当前控件层级，无需设置 objectName。
+ * 所有页面规则限定在 MainWidget 内，不影响独立登录和设置窗口。
+ * 现有控件上的 setStyleSheet 优先于本文件；保留现有字体及预览样式。
+ * 布局比例、布局间距和图标由现有 C++ 代码控制。
+ */
+
+MainWidget {
+    background-color: #eef2f6;
+    color: #203047;
+    font-family: "Microsoft YaHei", "Segoe UI";
+    font-size: 14px;
+}
+
+MainWidget QWidget {
+    background-color: transparent;
+    color: #203047;
+    font-family: "Microsoft YaHei", "Segoe UI";
+    font-size: 14px;
+}
+
+/* 顶部标题：MainWidget -> headerWidget -> titleLabel */
+MainWidget > QWidget > QLabel {
+    color: #16334b;
+    background-color: transparent;
+    border: none;
+    font-size: 30px;
+    font-weight: 700;
+}
+
+/* 时间和用户标签：headerWidget -> headerRightWidget -> statusWidget */
+MainWidget > QWidget > QWidget > QWidget > QLabel {
+    color: #36536a;
+    border: none;
+    background-color: transparent;
+}
+
+/* 所有按钮的基础外观，包括通道按钮 */
+MainWidget QPushButton {
+    color: #31465d;
+    background-color: #ffffff;
+    border: 1px solid #d4dee8;
+    border-radius: 8px;
+    padding: 9px 10px;
+    min-height: 24px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+MainWidget QPushButton:hover {
+    color: #087c91;
+    background-color: #f0fbfd;
+    border-color: #78c7d3;
+}
+
+MainWidget QPushButton:pressed {
+    color: #075b6c;
+    background-color: #d6eef3;
+    border-color: #2196aa;
+}
+
+MainWidget QPushButton:checked {
+    color: #ffffff;
+    background-color: #087f94;
+    border-color: #087f94;
+    font-weight: 600;
+}
+
+MainWidget QPushButton:checked:hover {
+    background-color: #096f82;
+    border-color: #096f82;
+}
+
+MainWidget QPushButton:checked:pressed {
+    background-color: #085e6f;
+    border-color: #085e6f;
+}
+
+/* 键盘焦点使用边框反馈，不改变控件尺寸 */
+MainWidget QPushButton:focus {
+    border: 1px solid #148ca6;
+}
+
+MainWidget QPushButton:disabled {
+    color: #95a1af;
+    background-color: #e8edf2;
+    border-color: #dce3ea;
+}
+
+/* 顶部五个导航按钮，以及同层级的登录按钮 */
+MainWidget > QWidget > QWidget > QWidget > QPushButton {
+    border-radius: 9px;
+    padding: 10px 6px;
+}
+
+/* 预览下方图标按钮：利用代码中已有的 accessibleName */
+MainWidget QPushButton[accessibleName="单通道"],
+MainWidget QPushButton[accessibleName="4通道"] {
+    min-width: 36px;
+    min-height: 30px;
+    padding: 5px 10px;
+    border-radius: 7px;
+}
+
+/* 图标保留原色，选中背景采用浅青色，保证深色图标可见 */
+MainWidget QPushButton[accessibleName="单通道"]:checked,
+MainWidget QPushButton[accessibleName="4通道"]:checked {
+    background-color: #d9f0f4;
+    border-color: #128ba1;
+}
+
+MainWidget QPushButton[accessibleName="单通道"]:checked:hover,
+MainWidget QPushButton[accessibleName="4通道"]:checked:hover {
+    background-color: #c7e8ee;
+    border-color: #087f94;
+}
+
+MainWidget QPushButton[accessibleName="单通道"]:checked:pressed,
+MainWidget QPushButton[accessibleName="4通道"]:checked:pressed {
+    background-color: #b5dfe7;
+    border-color: #086b7e;
+}
+
+/* 保留原生复选框指示器和勾选标记 */
+MainWidget QCheckBox {
+    color: #31465d;
+    spacing: 8px;
+    padding: 4px 8px;
+    font-size: 14px;
+}
+
+MainWidget QCheckBox:hover {
+    color: #087f94;
+}
+
+MainWidget QCheckBox:disabled {
+    color: #939fac;
+}
+
+/* 其他三个内容页的占位标题 */
+MainWidget > QWidget > QWidget > QLabel {
+    color: #65788c;
+    font-size: 28px;
+    font-weight: 500;
+}
+
+/* 时间标签；用户名通过下面的规则恢复普通字号 */
+MainWidget > QWidget > QWidget > QWidget > QLabel {
+    font-size: 20px;
+}
+
+MainWidget > QWidget > QWidget > QWidget > QLabel[text="未登录"] {
+    font-size: 14px;
+}
+
+/* 实时预览标签 */
+MainWidget > QWidget > QWidget > QWidget > QWidget > QWidget > QLabel {
+    background-color: black;
+    border: 1px solid #444444;
+}
+
+/* 回看页筛选控件 */
+ReviewWidget QComboBox,
+ReviewWidget QDateTimeEdit,
+MotionReviewWidget QComboBox,
+MotionReviewWidget QDateTimeEdit {
+    color: #31465d;
+    background-color: #ffffff;
+    border: 1px solid #d4dee8;
+    border-radius: 7px;
+    min-height: 34px;
+    padding: 0 30px 0 10px;
+    font-size: 14px;
+}
+
+ReviewWidget QComboBox:hover,
+ReviewWidget QDateTimeEdit:hover,
+MotionReviewWidget QComboBox:hover,
+MotionReviewWidget QDateTimeEdit:hover {
+    border-color: #78c7d3;
+    background-color: #f8fcfd;
+}
+
+ReviewWidget QComboBox:focus,
+ReviewWidget QDateTimeEdit:focus,
+ReviewWidget QComboBox:on,
+ReviewWidget QDateTimeEdit:on,
+MotionReviewWidget QComboBox:focus,
+MotionReviewWidget QDateTimeEdit:focus,
+MotionReviewWidget QComboBox:on,
+MotionReviewWidget QDateTimeEdit:on {
+    border-color: #087f94;
+    background-color: #ffffff;
+}
+
+ReviewWidget QComboBox:disabled,
+ReviewWidget QDateTimeEdit:disabled,
+MotionReviewWidget QComboBox:disabled,
+MotionReviewWidget QDateTimeEdit:disabled {
+    color: #95a1af;
+    background-color: #e8edf2;
+    border-color: #dce3ea;
+}
+
+ReviewWidget QComboBox::drop-down,
+MotionReviewWidget QComboBox::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 28px;
+    border-left: 1px solid #dbe3eb;
+    border-top-right-radius: 7px;
+    border-bottom-right-radius: 7px;
+}
+
+ReviewWidget QComboBox::drop-down:hover,
+MotionReviewWidget QComboBox::drop-down:hover {
+    background-color: #e5f4f6;
+    border-left-color: #78c7d3;
+}
+
+ReviewWidget QComboBox QAbstractItemView,
+MotionReviewWidget QComboBox QAbstractItemView {
+    color: #31465d;
+    background-color: #ffffff;
+    border: 1px solid #b9c9d8;
+    border-radius: 6px;
+    padding: 4px;
+    outline: 0;
+    selection-color: #ffffff;
+    selection-background-color: #087f94;
+}
+
+ReviewWidget QComboBox QAbstractItemView::item,
+MotionReviewWidget QComboBox QAbstractItemView::item {
+    min-height: 30px;
+    padding: 3px 8px;
+}
+
+/* 日期时间选择器展开后的日历 */
+ReviewWidget QCalendarWidget,
+ReviewWidget QCalendarWidget QWidget,
+ReviewWidget QCalendarWidget QAbstractItemView,
+MotionReviewWidget QCalendarWidget,
+MotionReviewWidget QCalendarWidget QWidget,
+MotionReviewWidget QCalendarWidget QAbstractItemView {
+    color: #31465d;
+    background-color: #ffffff;
+}
+
+ReviewWidget QCalendarWidget QAbstractItemView,
+MotionReviewWidget QCalendarWidget QAbstractItemView {
+    outline: 0;
+    selection-color: #ffffff;
+    selection-background-color: #087f94;
+}
+
+/* 视频列表和图片网格的当前页指示 */
+ReviewWidget QLabel#pageIndicator,
+MotionReviewWidget QLabel#pageIndicator {
+    color: #087f94;
+    background-color: #e5f4f6;
+    border: 1px solid #b9dde3;
+    border-radius: 7px;
+    min-width: 54px;
+    min-height: 30px;
+    padding: 0 10px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+MotionReviewWidget QLabel#videoThumbnail {
+    background-color: #ffffff;
+    border: none;
+}
+

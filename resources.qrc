@@ -1,0 +1,13 @@
+<RCC>
+    <qresource prefix="/">
+        <file>images/eye.png</file>
+        <file>images/fourchannel.png</file>
+        <file>images/onechannel.png</file>
+        <file>styles/mainwidget.qss</file>
+        <file>images/back.jpg</file>
+        <file>styles/loginwidget.qss</file>
+        <file>images/black_monitor.jpeg</file>
+        <file>images/image-fill.png</file>
+        <file>styles/settingswidget.qss</file>
+    </qresource>
+</RCC>

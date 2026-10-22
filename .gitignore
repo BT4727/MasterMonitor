@@ -1,0 +1,36 @@
+# Qt Creator and qmake local files
+*.pro.user*
+*.qbs.user*
+CMakeLists.txt.user*
+.qmake.cache
+.qmake.stash
+.qtcreator/
+.qtc_clangd/
+
+# qmake build output
+Makefile*
+/debug/
+/release/
+/build*/
+*.o
+*.obj
+*.a
+*.dll
+*.exe
+*.moc
+moc_*.cpp
+qrc_*.cpp
+ui_*.h
+
+# Runtime output, user settings, recordings, and screenshots
+/bin/
+
+# Local regression tests are not part of the application project
+/tests/
+
+# Editor and operating-system files
+*~
+*.autosave
+*.swp
+.DS_Store
+Thumbs.db

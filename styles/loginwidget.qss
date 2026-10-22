@@ -1,0 +1,113 @@
+/* 登录页基础颜色和字体 */
+LoginWidget {
+    background-color: #eef2f6;
+}
+
+LoginWidget QLabel,
+LoginWidget QLineEdit,
+LoginWidget QPushButton {
+    font-family: "Microsoft YaHei", "Segoe UI";
+    font-size: 14px;
+    color: #203047;
+}
+
+/* 标题 */
+LoginWidget QLabel#loginTitle {
+    background-color: transparent;
+    border: none;
+    color: #16334b;
+    font-size: 30px;
+    font-weight: 700;
+}
+
+/* 表单区域 */
+LoginWidget QFrame#loginFormPanel {
+    background-color: #ffffff;
+    border: 1px solid #dbe3eb;
+    border-radius: 12px;
+}
+
+LoginWidget QLabel {
+    background-color: transparent;
+    border: none;
+}
+
+/* 输入框：内容高度28px，加上下内边距后约44px */
+LoginWidget QLineEdit {
+    background-color: #ffffff;
+    border: 1px solid #d4dee8;
+    border-radius: 7px;
+    min-height: 28px;
+    padding: 7px 10px;
+    selection-background-color: #087f94;
+    selection-color: #ffffff;
+}
+
+LoginWidget QLineEdit:hover {
+    border-color: #78c7d3;
+}
+
+LoginWidget QLineEdit:focus {
+    border-color: #087f94;
+}
+
+/* 普通按钮 */
+LoginWidget QPushButton {
+    background-color: #ffffff;
+    color: #31465d;
+    border: 1px solid #d4dee8;
+    border-radius: 8px;
+    min-height: 24px;
+    padding: 9px 10px;
+    font-weight: 500;
+}
+
+LoginWidget QPushButton:hover {
+    background-color: #f0fbfd;
+    color: #087c91;
+    border-color: #78c7d3;
+}
+
+LoginWidget QPushButton:pressed {
+    background-color: #d6eef3;
+    border-color: #2196aa;
+}
+
+LoginWidget QPushButton:focus {
+    border-color: #148ca6;
+}
+
+/* 登录按钮 */
+LoginWidget QPushButton#loginButton {
+    background-color: #087f94;
+    border-color: #087f94;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+LoginWidget QPushButton#loginButton:hover {
+    background-color: #096f82;
+    border-color: #096f82;
+}
+
+LoginWidget QPushButton#loginButton:pressed {
+    background-color: #085e6f;
+    border-color: #085e6f;
+}
+
+/* 密码切换按钮：高度与输入框接近 */
+LoginWidget QPushButton#passwordToggleButton {
+    min-width: 28px;
+    min-height: 28px;
+    padding: 7px;
+    border-radius: 7px;
+}
+
+LoginWidget QPushButton#passwordToggleButton:checked {
+    background-color: #d9f0f4;
+    border-color: #128ba1;
+}
+
+LoginWidget QPushButton#passwordToggleButton:checked:hover {
+    background-color: #c7e8ee;
+}
