@@ -82,21 +82,53 @@ bool SnapshotService::saveManualSnapshot(
     return true;
 }
 
-bool SnapshotService::saveEventSnapshots(
-    const QVector<QImage> &images, const QVector<QDateTime> &frameTimes,
-    int channelNo, qulonglong eventId, const QString &directory,
-    QVector<SnapshotInfo> &snapshots, QString &errorMessage)
+bool SnapshotService::saveEventSnapshot(
+    const QImage &image, int channelNo, qulonglong eventId,
+    qulonglong videoId, const QDateTime &eventTime,
+    const QDateTime &frameTime, qint64 offsetMs, int sequence,
+    const QString &directory, QString &errorMessage)
 {
-    Q_UNUSED(images);
-    Q_UNUSED(frameTimes);
-    Q_UNUSED(channelNo);
-    Q_UNUSED(eventId);
-    Q_UNUSED(directory);
-    snapshots.clear();
-    // 后续传入三张间隔帧和画面时间，按“异常_通道_时间_序号”命名，
-    // snapshot_type 写入 auto，event_id 关联事件。当前仅预留接口。
-    errorMessage = QStringLiteral("自动事件截图接口尚未接入移动侦测");
-    return false;
+    errorMessage.clear();
+    if (image.isNull() || eventId == 0 || videoId == 0 || offsetMs < 0
+        || sequence < 1 || sequence > 3) {
+        errorMessage = QStringLiteral("事件截图参数无效");
+        return false;
+    }
+    if (!QDir().mkpath(directory)) {
+        errorMessage = QStringLiteral("无法创建事件图片目录");
+        return false;
+    }
+    const QString fileName = QStringLiteral("异常_通道%1_%2_%3.jpg")
+        .arg(channelNo).arg(eventTime.toString(QStringLiteral("yyyyMMdd_HHmmss_zzz"))).arg(sequence);
+    const QString filePath = QDir(directory).filePath(fileName);
+    if (QFileInfo::exists(filePath)) {
+        errorMessage = QStringLiteral("事件图片已经存在：%1").arg(filePath);
+        return false;
+    }
+    QSaveFile file(filePath);
+    if (!file.open(QIODevice::WriteOnly)) {
+        errorMessage = file.errorString();
+        return false;
+    }
+    if (!image.save(&file, "JPG", 95)) {
+        file.cancelWriting();
+        errorMessage = QStringLiteral("事件图片编码失败");
+        return false;
+    }
+    if (!file.commit()) {
+        errorMessage = file.errorString();
+        return false;
+    }
+    qulonglong snapshotId = 0;
+    const bool inserted = snapshotModel.insertSnapshot(
+        channelNo, QStringLiteral("auto"), QDateTime::currentDateTime(),
+        frameTime, filePath, videoId, eventId, offsetMs, snapshotId, errorMessage);
+    if (!inserted) {
+        if (!QFile::remove(filePath))
+            errorMessage += QStringLiteral("\n未能清理图片：%1").arg(filePath);
+        return false;
+    }
+    return true;
 }
 
 bool SnapshotService::searchSnapshots(

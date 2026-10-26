@@ -123,18 +123,23 @@ void MonitorTask::startMonitor()
             break;
         }
 
+        const cv::Mat rawFrame = frame.clone();
+        int personState = -1;
+        bool allowTrigger = false;
+        if (detectionService != nullptr)
+            detectionService->prepareFrame(channelIndex, frame, personState, allowTrigger);
+
         // 每个通道最多有一张帧正在排队或处理中。
         // 处理没完成时跳过当前帧，防止事件队列积压。
         if (frameSemaphore->tryAcquire()) {
             emit sendFrame(frame.clone(), status);
         }
 
-        // 使用阻塞队列连接录制线程，
-        // 使采集端不会无限堆积待录制帧。
+        // 录制任务只替换每通道缓存帧，采集线程不会等待编码完成。
         {
             QMutexLocker<QMutex> locker(&recordMutex);
             if (recordEnabled)
-                emit sendRecordFrame(channelIndex, frame.clone());
+                emit sendRecordFrame(channelIndex, rawFrame, frame.clone(), personState, allowTrigger);
         }
         const int remaining =
             interval - static_cast<int>(frameTimer.elapsed());
@@ -153,6 +158,11 @@ void MonitorTask::setRecordEnabled(bool enabled)
     // 等正在发送的录制帧处理完毕，再切换录制状态。
     QMutexLocker<QMutex> locker(&recordMutex);
     recordEnabled = enabled;
+}
+
+void MonitorTask::setDetectionService(DetectionService *service)
+{
+    detectionService = service;
 }
 
 bool MonitorTask::openCamera(

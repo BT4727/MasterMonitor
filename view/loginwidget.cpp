@@ -297,6 +297,8 @@ void LoginWidget::clearAllInputs()
 
 void LoginWidget::onLoginClicked()
 {
+    const QString attemptedUsername = m_usernameEdit->text().trimmed();
+
     // 验证码始终优先校验。
     const bool captchaCorrect =
         QString::compare(
@@ -305,6 +307,13 @@ void LoginWidget::onLoginClicked()
             Qt::CaseInsensitive) == 0;
 
     if (!captchaCorrect) {
+        logService.recordOperation(
+            attemptedUsername, 0, QStringLiteral("login"),
+            QStringLiteral("user"), 0, false,
+            QStringLiteral("账号%1登录失败：验证码错误")
+                .arg(attemptedUsername.isEmpty()
+                         ? QStringLiteral("未填写") : attemptedUsername));
+
         QMessageBox::warning(
             this,
             QStringLiteral("登录失败"),
@@ -319,8 +328,15 @@ void LoginWidget::onLoginClicked()
     const bool usernameValid = validateUsername();
     const bool passwordValid = validatePassword();
 
-    if (!usernameValid || !passwordValid)
+    if (!usernameValid || !passwordValid) {
+        logService.recordOperation(
+            attemptedUsername, 0, QStringLiteral("login"),
+            QStringLiteral("user"), 0, false,
+            QStringLiteral("账号%1登录失败：用户名或密码格式错误")
+                .arg(attemptedUsername.isEmpty()
+                         ? QStringLiteral("未填写") : attemptedUsername));
         return;
+    }
 
     const QString username =
         m_usernameEdit->text().trimmed();
@@ -332,6 +348,10 @@ void LoginWidget::onLoginClicked()
 
     if (loginResult ==
         AdminUserService::LoginResult::DatabaseError) {
+        logService.recordOperation(
+            username, 0, QStringLiteral("login"),
+            QStringLiteral("user"), 0, false,
+            QStringLiteral("账号%1登录失败：数据库连接或查询失败").arg(username));
         QMessageBox::warning(
             this,
             QStringLiteral("登录失败"),
@@ -341,6 +361,10 @@ void LoginWidget::onLoginClicked()
 
     if (loginResult ==
         AdminUserService::LoginResult::AccountLocked) {
+        logService.recordOperation(
+            username, 0, QStringLiteral("login"),
+            QStringLiteral("user"), 0, false,
+            QStringLiteral("账号%1登录失败：账号处于锁定状态").arg(username));
         QMessageBox::warning(
             this,
             QStringLiteral("登录失败"),
@@ -355,6 +379,10 @@ void LoginWidget::onLoginClicked()
 
     if (loginResult ==
         AdminUserService::LoginResult::InvalidCredentials) {
+        logService.recordOperation(
+            username, 0, QStringLiteral("login"),
+            QStringLiteral("user"), 0, false,
+            QStringLiteral("账号%1登录失败：用户名或密码错误").arg(username));
         QMessageBox::warning(
             this,
             QStringLiteral("登录失败"),
@@ -365,6 +393,11 @@ void LoginWidget::onLoginClicked()
         m_usernameEdit->setFocus();
         return;
     }
+
+    logService.recordOperation(
+        username, 0, QStringLiteral("login"),
+        QStringLiteral("user"), 0, true,
+        QStringLiteral("账号%1登录成功").arg(username));
 
     WinManager *manager = WinManager::getInstance();
     manager->mainWidget.setCurrentUser(username);

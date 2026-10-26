@@ -7,6 +7,7 @@
 #include <QMetaType>
 #include <QMutex>
 #include <opencv2/opencv.hpp>
+#include "persondetection.h"
 
 class MonitorTask : public QObject
 {
@@ -19,10 +20,12 @@ public:
         QSemaphore *frameSemaphore,
         QObject *parent = nullptr);
     void setRecordEnabled(bool enabled);
+    void setDetectionService(DetectionService *service);
 
 signals:
     void sendFrame(cv::Mat frame,const QString &status);
-    void sendRecordFrame(int channelIndex,cv::Mat frame);
+    void sendRecordFrame(int channelIndex, cv::Mat rawFrame, cv::Mat markedFrame,
+                         int personState, bool allowTrigger);
 public slots:
     void startMonitor();
 
@@ -43,6 +46,7 @@ private:
     QSemaphore *frameSemaphore;
     QMutex recordMutex;
     bool recordEnabled = false;
+    DetectionService *detectionService = nullptr;
 };
 
 #endif // MONITORTASK_H

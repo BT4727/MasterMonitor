@@ -11,13 +11,16 @@ SOURCES += \
     model/adminusermodel.cpp \
     model/configfilemodel.cpp \
     model/eventrecordmodel.cpp \
+    model/operationlogmodel.cpp \
     model/snapshotmodel.cpp \
     model/userconfigmodel.cpp \
     model/videorecordmodel.cpp \
     service/adminuserservice.cpp \
     service/monitorservice.cpp \
+    service/logservice.cpp \
     service/monitortask.cpp \
     service/playbackservice.cpp \
+    service/persondetection.cpp \
     service/processtask.cpp \
     service/recordmanager.cpp \
     service/recordtask.cpp \
@@ -39,14 +42,17 @@ HEADERS += \
     model/adminusermodel.h \
     model/configfilemodel.h \
     model/eventrecordmodel.h \
+    model/operationlogmodel.h \
     model/snapshotmodel.h \
     model/systemconfigdata.h \
     model/userconfigmodel.h \
     model/videorecordmodel.h \
     service/adminuserservice.h \
     service/monitorservice.h \
+    service/logservice.h \
     service/monitortask.h \
     service/playbackservice.h \
+    service/persondetection.h \
     service/processtask.h \
     service/recordmanager.h \
     service/recordtask.h \
@@ -88,6 +94,7 @@ LIBS += -llibopencv_dnn4100         # 用于opencv访问Onnx模型的接口模�
 LIBS += -llibopencv_features2d4100 #特征检测(如 SIFT/SURF)
 LIBS += -llibopencv_calib3d4100     # 相机标定、3D 重建
 LIBS += -llibopencv_objdetect4100   # 目标检测(如 Haar 级联)
+LIBS += -llibopencv_video4100       # Kalman目标轨迹预测
 
 RESOURCES += \
     resources.qrc

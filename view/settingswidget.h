@@ -14,6 +14,7 @@
 #include <array>
 #include "../model/systemconfigdata.h"
 #include "../service/systemconfigservice.h"
+#include "../service/logservice.h"
 
 class SettingsWidget : public QWidget
 {
@@ -53,6 +54,7 @@ private:
     QString currentUsername;
     SystemConfigData loadedConfiguration;
     SystemConfigService configService;
+    LogService logService;
 
     QVBoxLayout *mainLayout = nullptr;
     QLabel *titleLabel = nullptr;

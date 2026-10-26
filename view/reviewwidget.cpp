@@ -79,6 +79,7 @@ void ReviewWidget::initLeftArea()
 
     recordTypeComboBox = new QComboBox(m_filterWidget);
     recordTypeComboBox->addItem(QStringLiteral("普通录像"), QStringLiteral("normal"));
+    recordTypeComboBox->addItem(QStringLiteral("移动目标录像"), QStringLiteral("motion"));
     recordTypeComboBox->setEnabled(false);
 
     searchButton = new QPushButton(QStringLiteral("查询"), m_filterWidget);
@@ -255,9 +256,6 @@ void ReviewWidget::initRightArea()
 
     m_previewContentStack->addWidget(m_videoPreviewPage);
     m_previewContentStack->addWidget(m_imagePreviewPage);
-    motionPlaceholder = new QLabel(QStringLiteral("移动目标侦测回看暂未实现"), m_previewContentWidget);
-    static_cast<QLabel *>(motionPlaceholder)->setAlignment(Qt::AlignCenter);
-    m_previewContentStack->addWidget(motionPlaceholder);
 
     // 顶部模式按钮 : 下部预览区域 = 1 : 10
     // 预览页内部再按9 : 1划分内容和操作区
@@ -409,9 +407,7 @@ void ReviewWidget::initConnect()
 {
     connect(m_videoPreviewButton, &QPushButton::clicked, this, &ReviewWidget::openOrdinaryPlayback);
 
-    connect(motionPreviewButton, &QPushButton::clicked, this, [this]() {
-        setPreviewMode(MotionPreview);
-    });
+    connect(motionPreviewButton, &QPushButton::clicked, this, &ReviewWidget::openMotionPlayback);
 
     connect(searchButton, &QPushButton::clicked, this, &ReviewWidget::searchCurrentContent);
 
@@ -467,6 +463,7 @@ void ReviewWidget::initConnect()
     connect(mediaPlayer, &QMediaPlayer::durationChanged, this, [this](qint64 duration) {
         progressSlider->setRange(0, static_cast<int>(duration));
         durationLabel->setText(formatPlaybackTime(duration));
+        applyPendingSeek();
     });
 
     connect(mediaPlayer, &QMediaPlayer::positionChanged, this, [this](qint64 position) {
@@ -548,7 +545,7 @@ void ReviewWidget::initConnect()
 
 void ReviewWidget::setPreviewMode(PreviewMode mode)
 {
-    if (mode != VideoPreview)
+    if (mode != m_previewMode)
         mediaPlayer->pause();
     m_previewMode = mode;
 
@@ -557,15 +554,16 @@ void ReviewWidget::setPreviewMode(PreviewMode mode)
 
     m_leftContentStack->setCurrentIndex(pageIndex);
     m_leftBottomStack->setCurrentIndex(pageIndex);
-    m_previewContentStack->setCurrentIndex(static_cast<int>(mode));
-    m_leftContentWidget->setVisible(mode != MotionPreview);
-    m_leftBottomWidget->setVisible(mode != MotionPreview);
-    m_filterWidget->setEnabled(mode != MotionPreview);
+    m_previewContentStack->setCurrentIndex(pageIndex);
+    m_leftContentWidget->setVisible(true);
+    m_leftBottomWidget->setVisible(true);
+    m_filterWidget->setEnabled(true);
 
     m_videoPreviewButton->setChecked(
         mode == VideoPreview);
     motionPreviewButton->setChecked(
         mode == MotionPreview);
+    recordTypeComboBox->setCurrentIndex(mode == MotionPreview ? 1 : 0);
     recordTypeComboBox->setEnabled(false);
     if (mode == ImagePreview && !currentUsername.isEmpty() && isVisible())
         searchSnapshots();
@@ -574,6 +572,17 @@ void ReviewWidget::setPreviewMode(PreviewMode mode)
 void ReviewWidget::openOrdinaryPlayback()
 {
     setPreviewMode(VideoPreview);
+    resetVideoQuery();
+}
+
+void ReviewWidget::openMotionPlayback()
+{
+    setPreviewMode(MotionPreview);
+    resetVideoQuery();
+}
+
+void ReviewWidget::resetVideoQuery()
+{
     videoQueryStart = QDateTime();
     videoQueryEnd = QDateTime();
     videoQueryChannel = 0;
@@ -596,7 +605,7 @@ void ReviewWidget::searchVideos()
 
 void ReviewWidget::loadVideoPage()
 {
-    if (currentUsername.isEmpty() || m_previewMode != VideoPreview)
+    if (currentUsername.isEmpty() || m_previewMode == ImagePreview)
         return;
     QVector<VideoRecordInfo> queriedRecords;
     QString errorMessage;
@@ -604,7 +613,8 @@ void ReviewWidget::loadVideoPage()
     int totalCount = 0;
     const bool queryResult = playbackService.searchPage(
         videoQueryStart, videoQueryEnd, videoQueryChannel, m_videoCurrentPage,
-        m_videoPageSize, queriedRecords, totalCount, errorMessage);
+        m_videoPageSize, queriedRecords, totalCount, errorMessage,
+        m_previewMode == MotionPreview ? QStringLiteral("motion") : QStringLiteral("normal"));
 
     if (!queryResult) {
         videoRecords.clear();
@@ -636,6 +646,10 @@ void ReviewWidget::playVideoAtRow(int row)
     const VideoRecordInfo &record = videoRecords.at(recordIndex);
 
     if (!QFileInfo::exists(record.videoPath)) {
+        logService.recordOperation(
+            currentUsername, record.channelNo, QStringLiteral("playback"),
+            QStringLiteral("video"), record.id, false,
+            QStringLiteral("回放失败，录像文件不存在：%1").arg(record.videoPath));
         QMessageBox::warning(
             this,
             QStringLiteral("录像文件缺失"),
@@ -650,13 +664,17 @@ void ReviewWidget::playVideoAtRow(int row)
     pendingSeekPosition = -1;
     mediaPlayer->setSource(QUrl::fromLocalFile(record.videoPath));
     mediaPlayer->play();
+    logService.recordOperation(
+        currentUsername, record.channelNo, QStringLiteral("playback"),
+        QStringLiteral("video"), record.id, true,
+        QStringLiteral("开始回放录像：%1").arg(record.videoPath));
 }
 
 void ReviewWidget::searchCurrentContent()
 {
     if (m_previewMode == ImagePreview)
         searchSnapshots();
-    else if (m_previewMode == VideoPreview)
+    else
         searchVideos();
 }
 
@@ -739,6 +757,10 @@ void ReviewWidget::savePlaybackSnapshot()
 {
     if (currentVideo.id == 0 || playbackFrame.isNull()
         || mediaPlayer->playbackState() == QMediaPlayer::StoppedState) {
+        logService.recordOperation(
+            currentUsername, currentVideo.channelNo, QStringLiteral("snapshot"),
+            QStringLiteral("snapshot"), 0, false,
+            QStringLiteral("回放截图失败：没有正在播放或暂停的录像"));
         QMessageBox::warning(this, QStringLiteral("截图失败"),
                             QStringLiteral("请先播放或暂停一段录像，再进行截图"));
         return;
@@ -751,6 +773,10 @@ void ReviewWidget::savePlaybackSnapshot()
     const QString directory =
         QCoreApplication::applicationDirPath() + QStringLiteral("/snapshots");
     if (!QDir().mkpath(directory)) {
+        logService.recordOperation(
+            currentUsername, record.channelNo, QStringLiteral("snapshot"),
+            QStringLiteral("snapshot"), 0, false,
+            QStringLiteral("回放截图失败：无法创建默认截图目录"));
         QMessageBox::warning(this, QStringLiteral("截图失败"),
                             QStringLiteral("无法创建默认截图目录"));
         return;
@@ -770,9 +796,17 @@ void ReviewWidget::savePlaybackSnapshot()
         image, record.channelNo, filePath, frameTime,
         record.id, offsetMs, snapshot, errorMessage);
     if (!saved) {
+        logService.recordOperation(
+            currentUsername, record.channelNo, QStringLiteral("snapshot"),
+            QStringLiteral("snapshot"), 0, false,
+            QStringLiteral("回放截图失败：%1").arg(errorMessage));
         QMessageBox::warning(this, QStringLiteral("截图失败"), errorMessage);
         return;
     }
+    logService.recordOperation(
+        currentUsername, record.channelNo, QStringLiteral("snapshot"),
+        QStringLiteral("snapshot"), snapshot.id, true,
+        QStringLiteral("保存回放截图：%1").arg(snapshot.snapshotPath));
     QMessageBox::information(this, QStringLiteral("截图成功"),
                             QStringLiteral("图片已保存：\n%1").arg(snapshot.snapshotPath));
 }
@@ -795,6 +829,11 @@ void ReviewWidget::deleteSelectedSnapshots()
     for (const SnapshotInfo &snapshot : selected) {
         QString errorMessage;
         if (!snapshotService.deleteSnapshot(snapshot, errorMessage)) {
+            logService.recordOperation(
+                currentUsername, 0, QStringLiteral("delete"),
+                QStringLiteral("snapshot"), 0, false,
+                QStringLiteral("删除图片失败，已删除%1张：%2")
+                    .arg(deletedCount).arg(errorMessage));
             QMessageBox::warning(this, QStringLiteral("删除未全部完成"),
                 QStringLiteral("已删除%1张。\n%2").arg(deletedCount).arg(errorMessage));
             searchSnapshots();
@@ -802,6 +841,10 @@ void ReviewWidget::deleteSelectedSnapshots()
         }
         ++deletedCount;
     }
+    logService.recordOperation(
+        currentUsername, 0, QStringLiteral("delete"),
+        QStringLiteral("snapshot"), 0, true,
+        QStringLiteral("批量删除图片，共%1张").arg(deletedCount));
     searchSnapshots();
 }
 
@@ -819,9 +862,17 @@ void ReviewWidget::exportSelectedSnapshots()
         return;
     QString errorMessage;
     if (!snapshotService.exportSnapshots(selected, directory, errorMessage)) {
+        logService.recordOperation(
+            currentUsername, 0, QStringLiteral("export"),
+            QStringLiteral("snapshot"), 0, false,
+            QStringLiteral("导出图片失败：%1").arg(errorMessage));
         QMessageBox::warning(this, QStringLiteral("导出未全部完成"), errorMessage);
         return;
     }
+    logService.recordOperation(
+        currentUsername, 0, QStringLiteral("export"),
+        QStringLiteral("snapshot"), 0, true,
+        QStringLiteral("导出%1张图片到：%2").arg(selected.size()).arg(directory));
     QMessageBox::information(this, QStringLiteral("导出成功"),
         QStringLiteral("已导出%1张图片到：\n%2").arg(selected.size()).arg(directory));
 }
@@ -975,13 +1026,15 @@ void ReviewWidget::playRelatedVideo()
 
 void ReviewWidget::applyPendingSeek()
 {
-    if (pendingSeekPosition < 0 || !mediaPlayer->isSeekable())
+    if (pendingSeekPosition < 0 || !mediaPlayer->isSeekable() || mediaPlayer->duration() <= 0)
         return;
-    qint64 targetPosition = pendingSeekPosition;
-    if (mediaPlayer->duration() > 0)
-        targetPosition = qMin(targetPosition, mediaPlayer->duration());
-    mediaPlayer->setPosition(targetPosition);
+    const QMediaPlayer::MediaStatus status = mediaPlayer->mediaStatus();
+    if (status != QMediaPlayer::LoadedMedia && status != QMediaPlayer::BufferingMedia
+        && status != QMediaPlayer::BufferedMedia && status != QMediaPlayer::EndOfMedia)
+        return;
+    const qint64 targetPosition = qMin(pendingSeekPosition, mediaPlayer->duration() - 1);
     pendingSeekPosition = -1;
+    mediaPlayer->setPosition(targetPosition);
 }
 
 QString ReviewWidget::formatPlaybackTime(qint64 milliseconds) const
@@ -1115,19 +1168,32 @@ bool ReviewWidget::playRecord(qulonglong recordId, qint64 offsetMs)
     VideoRecordInfo record;
     QString errorMessage;
     if (!playbackService.findRecordById(recordId, record, errorMessage)) {
+        logService.recordOperation(
+            currentUsername, 0, QStringLiteral("playback"),
+            QStringLiteral("video"), recordId, false,
+            QStringLiteral("关联录像查询失败：%1").arg(errorMessage));
         QMessageBox::warning(this, QStringLiteral("关联录像"), errorMessage);
         return false;
     }
     if (!QFileInfo::exists(record.videoPath)) {
+        logService.recordOperation(
+            currentUsername, record.channelNo, QStringLiteral("playback"),
+            QStringLiteral("video"), record.id, false,
+            QStringLiteral("关联录像文件不存在：%1").arg(record.videoPath));
         QMessageBox::warning(this, QStringLiteral("录像文件缺失"), record.videoPath);
         return false;
     }
-    if (record.recordType != QStringLiteral("normal")) {
+    if (record.recordStatus != 1
+        || (record.recordType != QStringLiteral("normal") && record.recordType != QStringLiteral("motion"))) {
+        logService.recordOperation(
+            currentUsername, record.channelNo, QStringLiteral("playback"),
+            QStringLiteral("video"), record.id, false,
+            QStringLiteral("关联录像尚未完成或类型不支持"));
         QMessageBox::information(this, QStringLiteral("关联录像"),
-                                 QStringLiteral("移动侦测回看暂未实现"));
+                                 QStringLiteral("关联录像尚未完成或类型不支持"));
         return false;
     }
-    setPreviewMode(VideoPreview);
+    setPreviewMode(record.recordType == QStringLiteral("motion") ? MotionPreview : VideoPreview);
     relatedPlaybackPending = !isVisible();
     mediaPlayer->stop();
     currentVideo = record;
@@ -1136,6 +1202,11 @@ bool ReviewWidget::playRecord(qulonglong recordId, qint64 offsetMs)
     pendingSeekPosition = qMax(qint64(0), offsetMs);
     mediaPlayer->setSource(QUrl::fromLocalFile(record.videoPath));
     mediaPlayer->play();
+    logService.recordOperation(
+        currentUsername, record.channelNo, QStringLiteral("playback"),
+        QStringLiteral("video"), record.id, true,
+        QStringLiteral("从关联记录回放录像：%1，偏移%2毫秒")
+            .arg(record.videoPath).arg(pendingSeekPosition));
     return true;
 }
 

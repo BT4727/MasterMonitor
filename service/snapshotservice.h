@@ -21,15 +21,10 @@ public:
         SnapshotInfo &snapshot,
         QString &errorMessage);
 
-    // 移动侦测接入后传入事件对应的三帧；此处不负责检测。
-    bool saveEventSnapshots(
-        const QVector<QImage> &images,
-        const QVector<QDateTime> &frameTimes,
-        int channelNo,
-        qulonglong eventId,
-        const QString &directory,
-        QVector<SnapshotInfo> &snapshots,
-        QString &errorMessage);
+    bool saveEventSnapshot(const QImage &image, int channelNo, qulonglong eventId,
+                           qulonglong videoId, const QDateTime &eventTime,
+                           const QDateTime &frameTime, qint64 offsetMs, int sequence,
+                           const QString &directory, QString &errorMessage);
 
     bool searchSnapshots(
         const QDateTime &startTime,

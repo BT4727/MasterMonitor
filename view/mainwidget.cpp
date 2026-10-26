@@ -304,7 +304,10 @@ void MainWidget::initMonitorPage()
 
 void MainWidget::initConnections()
 {
+    connect(m_pageStack, &QStackedLayout::currentChanged, this, &MainWidget::syncDetectionPreview);
     connect(static_cast<ReviewWidget *>(m_pages[SnapshotPage]), &ReviewWidget::relatedVideoRequested,
+            this, &MainWidget::openSnapshotVideo);
+    connect(static_cast<LogWidget *>(m_pages[LogPage]), &LogWidget::relatedVideoRequested,
             this, &MainWidget::openSnapshotVideo);
     connect(monitorScreenshotButton, &QPushButton::clicked,
             this, &MainWidget::saveMonitorSnapshot);
@@ -349,6 +352,8 @@ void MainWidget::initConnections()
 
     connect(m_motionCheckBox, &QCheckBox::toggled,
             this, &MainWidget::motionDetectionChanged);
+    connect(m_motionCheckBox, &QCheckBox::toggled,
+            this, &MainWidget::syncDetectionPreview);
 
     connect(m_loginButton,
             &QPushButton::clicked,
@@ -377,6 +382,10 @@ void MainWidget::saveMonitorSnapshot()
     const QImage image = monitorService->getChannelImage(m_currentChannel);
     const QDateTime frameTime = QDateTime::currentDateTime();
     if (image.isNull()) {
+        logService.recordOperation(
+            currentUsername, channelNo, QStringLiteral("snapshot"),
+            QStringLiteral("snapshot"), 0, false,
+            QStringLiteral("实时截图失败：当前通道没有可以保存的画面"));
         QMessageBox::warning(this, QStringLiteral("截图失败"),
                             QStringLiteral("当前通道没有可以保存的画面"));
         return;
@@ -384,6 +393,10 @@ void MainWidget::saveMonitorSnapshot()
     const QString directory =
         QCoreApplication::applicationDirPath() + QStringLiteral("/snapshots");
     if (!QDir().mkpath(directory)) {
+        logService.recordOperation(
+            currentUsername, channelNo, QStringLiteral("snapshot"),
+            QStringLiteral("snapshot"), 0, false,
+            QStringLiteral("实时截图失败：无法创建默认截图目录"));
         QMessageBox::warning(this, QStringLiteral("截图失败"),
                             QStringLiteral("无法创建默认截图目录"));
         return;
@@ -402,9 +415,17 @@ void MainWidget::saveMonitorSnapshot()
     const bool saved = snapshotService.saveManualSnapshot(
         image, channelNo, filePath, frameTime, 0, -1, snapshot, errorMessage);
     if (!saved) {
+        logService.recordOperation(
+            currentUsername, channelNo, QStringLiteral("snapshot"),
+            QStringLiteral("snapshot"), 0, false,
+            QStringLiteral("实时截图失败：%1").arg(errorMessage));
         QMessageBox::warning(this, QStringLiteral("截图失败"), errorMessage);
         return;
     }
+    logService.recordOperation(
+        currentUsername, channelNo, QStringLiteral("snapshot"),
+        QStringLiteral("snapshot"), snapshot.id, true,
+        QStringLiteral("保存实时截图：%1").arg(snapshot.snapshotPath));
     QMessageBox::information(this, QStringLiteral("截图成功"),
         QStringLiteral("通道%1截图已保存：\n%2").arg(channelNo).arg(snapshot.snapshotPath));
 }
@@ -430,6 +451,11 @@ void MainWidget::handleLoginButtonClicked()
     if (result != QMessageBox::Yes)
         return;
 
+    const QString logoutUsername = currentUsername;
+    logService.recordOperation(
+        logoutUsername, 0, QStringLiteral("logout"),
+        QStringLiteral("user"), 0, true,
+        QStringLiteral("账号%1退出登录").arg(logoutUsername));
     setCurrentUser(QString());
 }
 
@@ -474,6 +500,7 @@ void MainWidget::setCurrentUser(const QString &username)
     snapshotService.setCurrentUser(currentUsername);
     static_cast<ReviewWidget *>(m_pages[PlaybackPage])->setCurrentUser(currentUsername);
     static_cast<ReviewWidget *>(m_pages[SnapshotPage])->setCurrentUser(currentUsername);
+    static_cast<LogWidget *>(m_pages[LogPage])->setCurrentUser(currentUsername);
 
     m_userLabel->setText(
         loggedIn
@@ -566,6 +593,8 @@ void MainWidget::setSingleChannelMode(bool enabled)
         m_motionCheckBox->setChecked(false);
 
     m_motionCheckBox->setEnabled(enabled);
+    m_motionCheckBox->setToolTip(QStringLiteral("勾选后在当前单通道开启人体检测"));
+    syncDetectionPreview();
 }
 MainWidget::~MainWidget()
 {
@@ -581,6 +610,34 @@ void MainWidget::initMonitorService()
     if (loggedIn)
         updateRecordDirectory();
     previewTimer->start();
+    syncDetectionPreview();
+}
+
+void MainWidget::syncDetectionPreview()
+{
+    if (monitorService == nullptr)
+        return;
+    const bool previewActive = isVisible()
+        && m_pageStack->currentIndex() == MonitorPage
+        && m_singleChannelMode;
+    const bool detectionEnabled =
+        m_singleChannelMode && m_motionCheckBox->isChecked();
+    monitorService->setDetectionPreview(
+        previewActive, m_currentChannel, detectionEnabled);
+}
+
+void MainWidget::showEvent(QShowEvent *event)
+{
+    QWidget::showEvent(event);
+    syncDetectionPreview();
+}
+
+void MainWidget::hideEvent(QHideEvent *event)
+{
+    QWidget::hideEvent(event);
+    if (monitorService != nullptr)
+        monitorService->setDetectionPreview(
+            false, m_currentChannel, false);
 }
 
 void MainWidget::updateRecordDirectory()

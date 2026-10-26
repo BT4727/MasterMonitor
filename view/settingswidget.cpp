@@ -352,6 +352,17 @@ void SettingsWidget::onSaveClicked()
             configuration,
             errorMessage);
 
+    const bool success = result == SystemConfigService::Result::Success;
+    const QString logDescription = success
+        ? QStringLiteral("系统配置保存成功，录像目录：%1，切片时长：%2秒")
+              .arg(configuration.videoSavePath)
+              .arg(configuration.segmentSeconds)
+        : QStringLiteral("系统配置保存失败：%1")
+              .arg(resultMessage(result, errorMessage));
+    logService.recordOperation(
+        currentUsername, 0, QStringLiteral("config"),
+        QStringLiteral("config"), 0, success, logDescription);
+
     if (result != SystemConfigService::Result::Success) {
         QMessageBox::warning(
             this,

@@ -19,6 +19,8 @@ MonitorService::MonitorService(QObject *parent)
     }
 
     recordManager = new RecordManager(this);
+    detectionService = new DetectionService(this);
+    recordManager->setDetectionService(detectionService);
 }
 
 MonitorService::~MonitorService()
@@ -33,6 +35,10 @@ void MonitorService::startMonitor(const QString &videoDirectory)
     }
 
     QDir directory(videoDirectory);
+    const QString modelPath = QStringLiteral(
+        "E:/learn/ClassThree/yolov11-yolov8-dnn-Classify-Detect-Obb-Pose-Seg-main/"
+        "data/model/yolo11n.onnx");
+    detectionService->start(ChannelCount, modelPath);
 
     QStringList videoFiles =
         directory.entryList(
@@ -82,6 +88,7 @@ void MonitorService::startMonitor(const QString &videoDirectory)
             videoPath,
             frameSemaphores[index]);
 
+        captureTasks[index]->setDetectionService(detectionService);
         processTasks[index] = new ProcessTask(
             frameSemaphores[index]);
 
@@ -153,6 +160,7 @@ void MonitorService::stopMonitor()
     // 采集线程已不再发送帧，可以关闭录像并更新记录
     stopRecord();
 
+    detectionService->stop();
     // 然后停止处理线程。
     for (int index = 0; index < ChannelCount; index++) {
         processThreads[index]->quit();
@@ -209,7 +217,7 @@ void MonitorService::stopRecord()
 {
     if (!recording)
         return;
-    // 禁止新帧并等待阻塞发送完成，之后才能销毁录制线程。
+    // 禁止新帧提交，再让录像线程排空缓存并关闭当前片段。
     if (running) {
         for (int index = 0; index < ChannelCount; ++index)
             captureTasks[index]->setRecordEnabled(false);
@@ -217,6 +225,13 @@ void MonitorService::stopRecord()
     recordManager->stopRecord();
     recording = false;
     recordingUsername.clear();
+    detectionService->resetRecordingState();
+}
+
+void MonitorService::setDetectionPreview(
+    bool singleChannel, int channelIndex, bool detectionEnabled)
+{
+    detectionService->setPreview(singleChannel, channelIndex, detectionEnabled);
 }
 
 

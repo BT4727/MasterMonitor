@@ -15,10 +15,10 @@ bool PlaybackService::findRecordById(
 
 bool PlaybackService::searchPage(const QDateTime &startTime, const QDateTime &endTime, int channelNo,
                                int page, int pageSize, QVector<VideoRecordInfo> &records,
-                               int &totalCount, QString &errorMessage)
+                               int &totalCount, QString &errorMessage, const QString &recordType)
 {
     return videoRecordModel.searchPage(
-        startTime, endTime, channelNo, page, pageSize, records, totalCount, errorMessage);
+        startTime, endTime, channelNo, page, pageSize, records, totalCount, errorMessage, recordType);
 }
 
 bool PlaybackService::searchRecords(const QDate &date, const QTime &startTime, const QTime &endTime, int channelNo, const QString &recordType, QVector<VideoRecordInfo> &records, QString &errorMessage)

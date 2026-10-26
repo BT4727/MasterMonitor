@@ -25,6 +25,7 @@
 #include "../service/playbackservice.h"
 #include <QCheckBox>
 #include "../service/snapshotservice.h"
+#include "../service/logservice.h"
 #include <QImage>
 #include <QVideoSink>
 #include <QVideoFrame>
@@ -81,6 +82,8 @@ private:
     void updateImagePagination();
     void searchVideos();
     void openOrdinaryPlayback();
+    void openMotionPlayback();
+    void resetVideoQuery();
     void loadVideoPage();
     void playVideoAtRow(int row);
     QString formatPlaybackTime(qint64 milliseconds) const;
@@ -188,6 +191,7 @@ private:
 
     QVector<SnapshotInfo> snapshots;
     SnapshotService snapshotService;
+    LogService logService;
 
     std::array<QCheckBox *, ImagePageSize> imageSelectionChecks{};
 
@@ -226,7 +230,6 @@ private:
     int largeSnapshotIndex = -1;
     PageRole pageRole;
     QString currentUsername;
-    QWidget *motionPlaceholder = nullptr;
     int videoTotalCount = 0;
     QDateTime videoQueryStart;
     QDateTime videoQueryEnd;

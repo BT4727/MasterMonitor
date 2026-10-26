@@ -27,6 +27,7 @@ public:
         const QString &outputDirectory);
 
     void stopRecord();
+    void setDetectionService(DetectionService *service);
 
 signals:
     void outputDirectoryChanged(const QString &directory);
@@ -38,6 +39,7 @@ private:
     static constexpr int MaxRecordThreadCount = 13;
 
     bool running;
+    DetectionService *detectionService = nullptr;
     int captureThreadCount;
     int recordThreadCount;
 

@@ -22,6 +22,8 @@ public:
     void stopRecord();
     void setRecordDirectory(const QString &recordDirectory);
     QImage getChannelImage(int channelIndex);
+    void setDetectionPreview(bool singleChannel, int channelIndex,
+                             bool detectionEnabled);
 
 public slots:
     void stopMonitor();
@@ -42,6 +44,7 @@ private:
 
     QSemaphore *frameSemaphores[ChannelCount];
     RecordManager *recordManager;
+    DetectionService *detectionService;
 };
 
 #endif // MONITORSERVICE_H

@@ -27,7 +27,8 @@ public:
     bool findRecordById(qulonglong recordId, VideoRecordInfo &record, QString &errorMessage);
     bool searchPage(const QDateTime &startTime, const QDateTime &endTime, int channelNo,
                     int page, int pageSize, QVector<VideoRecordInfo> &records,
-                    int &totalCount, QString &errorMessage);
+                    int &totalCount, QString &errorMessage,
+                    const QString &recordType = QStringLiteral("normal"));
 
     bool insertRecord(
         int channelNo,
@@ -35,7 +36,10 @@ public:
         const QDateTime &startTime,
         const QString &videoPath,
         qulonglong &recordId,
-        QString &errorMessage);
+        QString &errorMessage, qulonglong eventId = 0);
+
+    bool insertMotionRecord(int channelNo, const QDateTime &startTime, const QString &videoPath,
+                            qulonglong &eventId, qulonglong &recordId, QString &errorMessage);
 
     bool finishRecord(
         qulonglong recordId,

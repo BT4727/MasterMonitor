@@ -14,7 +14,8 @@ public:
     bool findRecordById(qulonglong recordId, VideoRecordInfo &record, QString &errorMessage);
     bool searchPage(const QDateTime &startTime, const QDateTime &endTime, int channelNo,
                     int page, int pageSize, QVector<VideoRecordInfo> &records,
-                    int &totalCount, QString &errorMessage);
+                    int &totalCount, QString &errorMessage,
+                    const QString &recordType = QStringLiteral("normal"));
     bool searchRecords(
         const QDate &date,
         const QTime &startTime,

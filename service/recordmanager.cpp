@@ -21,6 +21,11 @@ RecordManager::~RecordManager()
     stopRecord();
 }
 
+void RecordManager::setDetectionService(DetectionService *service)
+{
+    detectionService = service;
+}
+
 void RecordManager::startRecord(
     int captureCount,
     const QString &outputDirectory, const QString &username)
@@ -49,6 +54,7 @@ void RecordManager::startRecord(
         recordTasks[index] = new RecordTask(
             index,
             outputDirectory, username);
+        recordTasks[index]->setDetectionService(detectionService);
 
         recordThreads[index]->setObjectName(
             QStringLiteral("recordThread%1")
@@ -98,8 +104,8 @@ void RecordManager::connectCaptureTask(
         captureTask,
         &MonitorTask::sendRecordFrame,
         recordTasks[recordThreadIndex],
-        &RecordTask::recordFrame,
-        Qt::BlockingQueuedConnection);
+        &RecordTask::submitFrame,
+        Qt::DirectConnection);
 }
 
 void RecordManager::setOutputDirectory(

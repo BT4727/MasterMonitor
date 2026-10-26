@@ -15,9 +15,12 @@
 #include <array>
 #include <QFile>
 #include <QDebug>
+#include <QShowEvent>
+#include <QHideEvent>
 #include "../service/storagemonitorservice.h"
 #include "../service/monitorservice.h"
 #include "../service/snapshotservice.h"
+#include "../service/logservice.h"
 
 class MainWidget : public QWidget
 {
@@ -27,6 +30,9 @@ public:
     ~MainWidget() override;
     // 空字符串表示未登录
     void setCurrentUser(const QString &username);
+protected:
+    void showEvent(QShowEvent *event) override;
+    void hideEvent(QHideEvent *event) override;
 signals:
     // 交给页面管理类处理独立页面跳转
     void settingsRequested();
@@ -39,6 +45,7 @@ private:
     void initPages();
     void initMonitorPage();
     void initConnections();
+    void syncDetectionPreview();
     void openSnapshotVideo(qulonglong recordId, qint64 offsetMs);
     void handleLoginButtonClicked();
     void openSettingsPage();
@@ -55,6 +62,7 @@ private:
     void saveMonitorSnapshot();
     QPushButton *monitorScreenshotButton = nullptr;
     SnapshotService snapshotService;
+    LogService logService;
 
     MonitorService *monitorService = nullptr;
     StorageMonitorService *storageMonitorService = nullptr;

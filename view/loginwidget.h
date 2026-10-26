@@ -14,6 +14,7 @@
 
 #include "identifyinglabel.h"
 #include "../service/adminuserservice.h"
+#include "../service/logservice.h"
 
 class LoginWidget : public QWidget
 {
@@ -35,6 +36,7 @@ private:
     QPixmap m_backgroundImage;
 
     AdminUserService m_adminUserService;
+    LogService logService;
 
     QVBoxLayout *m_usernameFieldLayout = nullptr;
     QVBoxLayout *m_passwordFieldLayout = nullptr;

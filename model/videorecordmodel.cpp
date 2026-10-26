@@ -76,7 +76,7 @@ bool VideoRecordModel::insertRecord(
     const QDateTime &startTime,
     const QString &videoPath,
     qulonglong &recordId,
-    QString &errorMessage)
+    QString &errorMessage, qulonglong eventId)
 {
     recordId = 0;
 
@@ -95,7 +95,7 @@ bool VideoRecordModel::insertRecord(
         "INSERT INTO video_record "
         "(user_id, channel_no, record_type, event_id, start_time, "
         "end_time, video_path, video_size, record_status) "
-        "SELECT id, :channel_no, :record_type, NULL, "
+        "SELECT id, :channel_no, :record_type, :event_id, "
         ":start_time, NULL, :video_path, 0, 0 FROM admin_user "
         "WHERE username = :username AND status = 1"));
     query.bindValue(QStringLiteral(":username"), currentUsername);
@@ -110,6 +110,11 @@ bool VideoRecordModel::insertRecord(
             QStringLiteral("yyyy-MM-dd HH:mm:ss.zzz")));
     query.bindValue(
         QStringLiteral(":video_path"), videoPath);
+
+    if (eventId == 0)
+        query.bindValue(QStringLiteral(":event_id"), QVariant());
+    else
+        query.bindValue(QStringLiteral(":event_id"), eventId);
 
     if (!query.exec()) {
         errorMessage = query.lastError().text();
@@ -135,33 +140,49 @@ bool VideoRecordModel::finishRecord(
         return false;
     }
 
-    QSqlQuery query(threadDatabase);
-
-    query.prepare(QStringLiteral(
-        "UPDATE video_record "
-        "SET end_time = :end_time, "
-        "video_size = :video_size, "
-        "record_status = :record_status "
-        "WHERE id = :id AND user_id = "
-        "(SELECT id FROM admin_user WHERE username = :username)"));
-    query.bindValue(QStringLiteral(":username"), currentUsername);
-
-    query.bindValue(
-        QStringLiteral(":end_time"),
-        endTime.toString(
-            QStringLiteral("yyyy-MM-dd HH:mm:ss.zzz")));
-    query.bindValue(
-        QStringLiteral(":video_size"), videoSize);
-    query.bindValue(
-        QStringLiteral(":record_status"), recordStatus);
-    query.bindValue(
-        QStringLiteral(":id"), recordId);
-
-    if (!query.exec()) {
-        errorMessage = query.lastError().text();
+    if (!threadDatabase.transaction()) {
+        errorMessage = threadDatabase.lastError().text();
         return false;
     }
 
+    QSqlQuery query(threadDatabase);
+    query.prepare(QStringLiteral(
+        "UPDATE video_record SET end_time = :end_time, video_size = :video_size, "
+        "record_status = :record_status WHERE id = :id AND user_id = "
+        "(SELECT id FROM admin_user WHERE username = :username)"));
+    query.bindValue(QStringLiteral(":end_time"),
+                    endTime.toString(QStringLiteral("yyyy-MM-dd HH:mm:ss.zzz")));
+    query.bindValue(QStringLiteral(":video_size"), videoSize);
+    query.bindValue(QStringLiteral(":record_status"), recordStatus);
+    query.bindValue(QStringLiteral(":id"), recordId);
+    query.bindValue(QStringLiteral(":username"), currentUsername);
+
+    if (!query.exec() || query.numRowsAffected() != 1) {
+        errorMessage = query.lastError().isValid()
+            ? query.lastError().text() : QStringLiteral("录像不存在或不属于当前用户");
+        threadDatabase.rollback();
+        return false;
+    }
+
+    query.finish();
+    query.prepare(QStringLiteral(
+        "UPDATE event_record SET end_time = :end_time WHERE id = "
+        "(SELECT event_id FROM video_record WHERE id = :id AND user_id = "
+        "(SELECT id FROM admin_user WHERE username = :username))"));
+    query.bindValue(QStringLiteral(":end_time"),
+                    endTime.toString(QStringLiteral("yyyy-MM-dd HH:mm:ss.zzz")));
+    query.bindValue(QStringLiteral(":id"), recordId);
+    query.bindValue(QStringLiteral(":username"), currentUsername);
+    if (!query.exec()) {
+        errorMessage = query.lastError().text();
+        threadDatabase.rollback();
+        return false;
+    }
+    if (!threadDatabase.commit()) {
+        errorMessage = threadDatabase.lastError().text();
+        threadDatabase.rollback();
+        return false;
+    }
     return true;
 }
 
@@ -278,17 +299,21 @@ bool VideoRecordModel::findRecordById(
 
 bool VideoRecordModel::searchPage(const QDateTime &startTime, const QDateTime &endTime, int channelNo,
                                 int page, int pageSize, QVector<VideoRecordInfo> &records,
-                                int &totalCount, QString &errorMessage)
+                                int &totalCount, QString &errorMessage, const QString &recordType)
 {
     records.clear();
     totalCount = 0;
+    if (recordType != QStringLiteral("normal") && recordType != QStringLiteral("motion")) {
+        errorMessage = QStringLiteral("不支持的录像类型");
+        return false;
+    }
     if (currentUsername.isEmpty() || !openThreadDatabase(errorMessage)) {
         if (errorMessage.isEmpty())
             errorMessage = QStringLiteral("请先登录");
         return false;
     }
     QString condition = QStringLiteral(
-        " FROM video_record WHERE record_type = 'normal' AND record_status = 1 "
+        " FROM video_record WHERE record_type = :record_type AND record_status = 1 "
         "AND user_id = (SELECT id FROM admin_user WHERE username = :username) ");
     if (startTime.isValid())
         condition += QStringLiteral("AND start_time >= :start_time ");
@@ -303,6 +328,7 @@ bool VideoRecordModel::searchPage(const QDateTime &startTime, const QDateTime &e
         + QStringLiteral("ORDER BY start_time DESC, id DESC LIMIT :limit OFFSET :offset"));
     QSqlQuery *queries[] = {&countQuery, &query};
     for (QSqlQuery *currentQuery : queries) {
+        currentQuery->bindValue(QStringLiteral(":record_type"), recordType);
         currentQuery->bindValue(QStringLiteral(":username"), currentUsername);
         if (startTime.isValid())
             currentQuery->bindValue(QStringLiteral(":start_time"), startTime.toString("yyyy-MM-dd HH:mm:ss.zzz"));
@@ -336,6 +362,55 @@ bool VideoRecordModel::searchPage(const QDateTime &startTime, const QDateTime &e
         record.videoSize = query.value(QStringLiteral("video_size")).toULongLong();
         record.recordStatus = query.value(QStringLiteral("record_status")).toInt();
         records.append(record);
+    }
+    return true;
+}
+
+bool VideoRecordModel::insertMotionRecord(
+    int channelNo, const QDateTime &startTime, const QString &videoPath,
+    qulonglong &eventId, qulonglong &recordId, QString &errorMessage)
+{
+    eventId = 0;
+    recordId = 0;
+    if (currentUsername.isEmpty()) {
+        errorMessage = QStringLiteral("未登录，不能创建移动事件录像");
+        return false;
+    }
+    if (!openThreadDatabase(errorMessage))
+        return false;
+    if (!threadDatabase.transaction()) {
+        errorMessage = threadDatabase.lastError().text();
+        return false;
+    }
+    QSqlQuery query(threadDatabase);
+    query.prepare(QStringLiteral(
+        "INSERT INTO event_record(channel_no, event_type, create_time, description) "
+        "VALUES(:channel_no, 'person_detected', :create_time, :description)"));
+    query.bindValue(QStringLiteral(":channel_no"), channelNo);
+    query.bindValue(QStringLiteral(":create_time"),
+                    startTime.toString(QStringLiteral("yyyy-MM-dd HH:mm:ss.zzz")));
+    query.bindValue(QStringLiteral(":description"),
+                    QStringLiteral("用户%1，通道%2检测到人体").arg(currentUsername).arg(channelNo));
+    if (!query.exec()) {
+        errorMessage = query.lastError().text();
+        threadDatabase.rollback();
+        return false;
+    }
+    eventId = query.lastInsertId().toULongLong();
+    query.finish();
+    if (!insertRecord(channelNo, QStringLiteral("motion"), startTime,
+                      videoPath, recordId, errorMessage, eventId)) {
+        threadDatabase.rollback();
+        eventId = 0;
+        recordId = 0;
+        return false;
+    }
+    if (!threadDatabase.commit()) {
+        errorMessage = threadDatabase.lastError().text();
+        threadDatabase.rollback();
+        eventId = 0;
+        recordId = 0;
+        return false;
     }
     return true;
 }
