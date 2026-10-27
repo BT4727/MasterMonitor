@@ -230,22 +230,70 @@ QVector<cv::Rect> PersonModel::detect(const cv::Mat &frame)
 
 QVector<cv::Rect> PersonModel::detectYolo(const cv::Mat &frame)
 {
+    // 使用模型原生640×640输入，保留灰度预处理但取消320×320缩放优化。
     const int inputSize = 640;
-    const float resizeScale = qMin(inputSize / static_cast<float>(frame.cols),
-                                   inputSize / static_cast<float>(frame.rows));
-    const int resizeWidth = qBound(1, cvRound(frame.cols * resizeScale), inputSize);
-    const int resizeHeight = qBound(1, cvRound(frame.rows * resizeScale), inputSize);
+
+    cv::Mat grayFrame;
+
+    if (frame.channels() == 3) {
+        cv::cvtColor(frame, grayFrame, cv::COLOR_BGR2GRAY);
+    } else if (frame.channels() == 4) {
+        cv::cvtColor(frame, grayFrame, cv::COLOR_BGRA2GRAY);
+    } else if (frame.channels() == 1) {
+        grayFrame = frame;
+    } else {
+        CV_Error(cv::Error::StsBadArg, "Unsupported frame channel count");
+    }
+
+    const float resizeScale = qMin(
+        inputSize / static_cast<float>(grayFrame.cols),
+        inputSize / static_cast<float>(grayFrame.rows));
+
+    const int resizeWidth = qBound(
+        1, cvRound(grayFrame.cols * resizeScale), inputSize);
+
+    const int resizeHeight = qBound(
+        1, cvRound(grayFrame.rows * resizeScale), inputSize);
+
     const int leftPadding = (inputSize - resizeWidth) / 2;
     const int topPadding = (inputSize - resizeHeight) / 2;
 
-    cv::Mat resizedFrame;
-    cv::resize(frame, resizedFrame, cv::Size(resizeWidth, resizeHeight));
-    cv::Mat inputFrame(inputSize, inputSize, CV_8UC3, cv::Scalar(114, 114, 114));
-    resizedFrame.copyTo(inputFrame(cv::Rect(
-        leftPadding, topPadding, resizeWidth, resizeHeight)));
+    cv::Mat resizedGrayFrame;
+    cv::resize(
+        grayFrame,
+        resizedGrayFrame,
+        cv::Size(resizeWidth, resizeHeight),
+        0,
+        0,
+        cv::INTER_AREA);
+
+    // 使用黑色像素补齐为640×640，避免裁剪原始画面。
+    cv::Mat paddedGrayFrame = cv::Mat::zeros(
+        inputSize,
+        inputSize,
+        CV_8UC1);
+
+    resizedGrayFrame.copyTo(
+        paddedGrayFrame(cv::Rect(
+            leftPadding,
+            topPadding,
+            resizeWidth,
+            resizeHeight)));
+
+    // YOLO模型仍需要三通道输入，将灰度图复制为BGR三通道。
+    cv::Mat inputFrame;
+    cv::cvtColor(
+        paddedGrayFrame,
+        inputFrame,
+        cv::COLOR_GRAY2BGR);
 
     cv::Mat blob = cv::dnn::blobFromImage(
-        inputFrame, 1.0 / 255.0, cv::Size(inputSize, inputSize), cv::Scalar(), true, false);
+        inputFrame,
+        1.0 / 255.0,
+        cv::Size(inputSize, inputSize),
+        cv::Scalar(),
+        true,
+        false);
     network.setInput(blob);
 
     std::vector<cv::Mat> outputTensors;

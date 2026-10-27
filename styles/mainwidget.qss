@@ -274,3 +274,88 @@ MotionReviewWidget QLabel#videoThumbnail {
     border: none;
 }
 
+/* 图片回看左侧：只展示存在图片的两小时时段 */
+MainWidget ReviewWidget QPushButton#snapshotTimeRangeButton {
+    color: #31465d;
+    background-color: #ffffff;
+    border: 1px solid #d4dee8;
+    border-radius: 7px;
+    padding: 8px 12px;
+    min-height: 24px;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: left;
+}
+
+MainWidget ReviewWidget QPushButton#snapshotTimeRangeButton:hover {
+    color: #087c91;
+    background-color: #f0fbfd;
+    border-color: #78c7d3;
+}
+
+MainWidget ReviewWidget QPushButton#snapshotTimeRangeButton:checked {
+    color: #ffffff;
+    background-color: #087f94;
+    border-color: #087f94;
+    font-weight: 600;
+}
+
+MainWidget ReviewWidget QPushButton#snapshotTimeRangeButton:checked:hover {
+    background-color: #096f82;
+    border-color: #096f82;
+}
+
+MainWidget ReviewWidget QLabel#snapshotTimeRangeEmpty {
+    color: #65788c;
+    background-color: #f7f9fb;
+    border: 1px dashed #c7d3df;
+    border-radius: 7px;
+    padding: 12px;
+    font-size: 14px;
+}
+
+/* QMessageBox由主页面及其子页面发起，统一采用主页面的浅色工作台样式 */
+MainWidget QMessageBox {
+    color: #203047;
+    background-color: #eef2f6;
+    font-family: "Microsoft YaHei", "Segoe UI";
+    font-size: 14px;
+}
+
+MainWidget QMessageBox QLabel {
+    color: #31465d;
+    background-color: transparent;
+    border: none;
+    font-size: 14px;
+}
+
+MainWidget QMessageBox QPushButton {
+    color: #31465d;
+    background-color: #ffffff;
+    border: 1px solid #d4dee8;
+    border-radius: 7px;
+    padding: 7px 16px;
+    min-width: 76px;
+    min-height: 24px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+MainWidget QMessageBox QPushButton:hover {
+    color: #087c91;
+    background-color: #f0fbfd;
+    border-color: #78c7d3;
+}
+
+MainWidget QMessageBox QPushButton:default {
+    color: #ffffff;
+    background-color: #087f94;
+    border-color: #087f94;
+    font-weight: 600;
+}
+
+MainWidget QMessageBox QPushButton:default:hover {
+    background-color: #096f82;
+    border-color: #096f82;
+}
+

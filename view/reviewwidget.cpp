@@ -180,35 +180,78 @@ void ReviewWidget::initTimeRanges()
 
     m_timeRangeGroup = new QButtonGroup(this);
     m_timeRangeGroup->setExclusive(true);
+    m_timeRangeEmptyLabel = new QLabel(
+        QStringLiteral("当前条件下没有图片"), m_timeRangeWidget);
+    m_timeRangeEmptyLabel->setObjectName(
+        QStringLiteral("snapshotTimeRangeEmpty"));
+    m_timeRangeEmptyLabel->setAlignment(Qt::AlignCenter);
+    m_timeRangeLayout->addWidget(m_timeRangeEmptyLabel);
+}
 
-    // 00:00 到 16:00 共960分钟，平均分为15段，每段64分钟
-    const QTime beginning(0, 0);
-    constexpr int intervalMinutes = 64;
+void ReviewWidget::updateTimeRangeButtons()
+{
+    for (QPushButton *button : m_timeRangeButtons) {
+        m_timeRangeGroup->removeButton(button);
+        m_timeRangeLayout->removeWidget(button);
+        delete button;
+    }
+    m_timeRangeButtons.clear();
 
-    for (int i = 0; i < TimeRangeCount; ++i) {
-        const QTime startTime =
-            beginning.addSecs(i * intervalMinutes * 60);
-        const QTime endTime =
-            beginning.addSecs((i + 1) * intervalMinutes * 60);
-
-        QPushButton *button = new QPushButton(
-            QStringLiteral("%1 - %2")
-                .arg(startTime.toString("HH:mm"),
-                     endTime.toString("HH:mm")),
-            m_timeRangeWidget);
-
-        button->setCheckable(true);
-        button->setProperty(
-            "startTime", startTime.toString("HH:mm"));
-        button->setProperty(
-            "endTime", endTime.toString("HH:mm"));
-
-        m_timeRangeButtons[i] = button;
-        m_timeRangeGroup->addButton(button, i);
-        m_timeRangeLayout->addWidget(button);
+    std::array<int, TimeRangeCount> rangeCounts{};
+    for (const SnapshotInfo &snapshot : daySnapshots) {
+        const int rangeIndex = snapshot.frameTime.time().hour() / 2;
+        if (rangeIndex >= 0 && rangeIndex < TimeRangeCount)
+            ++rangeCounts[static_cast<size_t>(rangeIndex)];
     }
 
-    m_timeRangeButtons[0]->setChecked(true);
+    m_timeRangeEmptyLabel->setVisible(daySnapshots.isEmpty());
+
+    for (int rangeIndex = 0; rangeIndex < TimeRangeCount; ++rangeIndex) {
+        if (rangeCounts[static_cast<size_t>(rangeIndex)] == 0)
+            continue;
+
+        const QTime startTime(rangeIndex * 2, 0);
+        const QTime endTime((rangeIndex + 1) * 2, 0);
+        QPushButton *button = new QPushButton(
+            QStringLiteral("%1 - %2  (%3)")
+                .arg(startTime.toString(QStringLiteral("HH:mm")))
+                .arg(endTime.toString(QStringLiteral("HH:mm")))
+                .arg(rangeCounts[static_cast<size_t>(rangeIndex)]),
+            m_timeRangeWidget);
+
+        button->setObjectName(QStringLiteral("snapshotTimeRangeButton"));
+        button->setCheckable(true);
+        button->setProperty("rangeIndex", rangeIndex);
+        m_timeRangeButtons.append(button);
+        m_timeRangeGroup->addButton(button, rangeIndex);
+        m_timeRangeLayout->insertWidget(
+            m_timeRangeLayout->count() - 1, button);
+    }
+
+}
+
+void ReviewWidget::showTimeRange(int rangeIndex)
+{
+    if (rangeIndex < 0 || rangeIndex >= TimeRangeCount)
+        return;
+
+    const QTime startTime(rangeIndex * 2, 0);
+    const QTime endTime((rangeIndex + 1) * 2, 0);
+    startTimeEdit->setTime(startTime);
+    endTimeEdit->setTime(endTime.addSecs(-1));
+
+    snapshots.clear();
+    for (const SnapshotInfo &snapshot : daySnapshots) {
+        if (snapshot.frameTime.time() >= startTime
+            && snapshot.frameTime.time() < endTime) {
+            snapshots.append(snapshot);
+        }
+    }
+
+    selectedSnapshotIds.clear();
+    m_imageCurrentPage = 1;
+    updateImagePagination();
+    emit timeRangeSelected(startTime, endTime);
 }
 
 void ReviewWidget::initRightArea()
@@ -527,20 +570,8 @@ void ReviewWidget::initConnect()
             applyPendingSeek();
     });
 
-    for (int i = 0; i < TimeRangeCount; ++i) {
-        connect(m_timeRangeButtons[i], &QPushButton::clicked, this, [this, i]() {
-            const QTime beginning(0, 0);
-            constexpr int intervalMinutes = 64;
-
-            const QTime startTime = beginning.addSecs(i * intervalMinutes * 60);
-            const QTime endTime = beginning.addSecs((i + 1) * intervalMinutes * 60);
-
-            startTimeEdit->setTime(startTime);
-            endTimeEdit->setTime(endTime.addSecs(-1));
-            searchSnapshots();
-            emit timeRangeSelected(startTime, endTime);
-        });
-    }
+    connect(m_timeRangeGroup, &QButtonGroup::idClicked,
+            this, &ReviewWidget::showTimeRange);
 }
 
 void ReviewWidget::setPreviewMode(PreviewMode mode)
@@ -683,12 +714,8 @@ void ReviewWidget::searchSnapshots()
     if (currentUsername.isEmpty())
         return;
     const QDate selectedDate = m_dateTimeEdit->date();
-    const QDateTime rangeStart(selectedDate, startTimeEdit->time());
-    QDateTime rangeEnd(selectedDate, endTimeEdit->time());
-    if (endTimeEdit->time() < startTimeEdit->time())
-        rangeEnd = rangeEnd.addDays(1);
-    // 包含结束时间这一秒内的毫秒。
-    rangeEnd = rangeEnd.addSecs(1);
+    const QDateTime rangeStart(selectedDate, QTime(0, 0));
+    const QDateTime rangeEnd(selectedDate.addDays(1), QTime(0, 0));
     QVector<SnapshotInfo> queriedSnapshots;
     QString errorMessage;
     const bool searched = snapshotService.searchSnapshots(
@@ -698,7 +725,9 @@ void ReviewWidget::searchSnapshots()
         QMessageBox::warning(this, QStringLiteral("图片查询失败"), errorMessage);
         return;
     }
-    snapshots = queriedSnapshots;
+    daySnapshots = queriedSnapshots;
+    snapshots = daySnapshots;
+    updateTimeRangeButtons();
     selectedSnapshotIds.clear();
     m_imageCurrentPage = 1;
     updateImagePagination();
@@ -1156,11 +1185,13 @@ void ReviewWidget::setCurrentUser(const QString &username)
     videoRecords.clear();
     videoTotalCount = 0;
     snapshots.clear();
+    daySnapshots.clear();
     selectedSnapshotIds.clear();
     m_videoCurrentPage = 1;
     m_imageCurrentPage = 1;
     updateVideoPagination();
     updateImagePagination();
+    updateTimeRangeButtons();
 }
 
 bool ReviewWidget::playRecord(qulonglong recordId, qint64 offsetMs)

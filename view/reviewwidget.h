@@ -65,7 +65,7 @@ private:
         MotionPreview
     };
 
-    static constexpr int TimeRangeCount = 15;
+    static constexpr int TimeRangeCount = 12;
     static constexpr int ImagePageSize = 9;
 
     void initLeftArea();
@@ -73,6 +73,8 @@ private:
     void initVideoList();
     void updateVideoColumnWidths();
     void initTimeRanges();
+    void updateTimeRangeButtons();
+    void showTimeRange(int rangeIndex);
     void initVideoPreview();
     void initImagePreview();
     void initConnect();
@@ -123,7 +125,8 @@ private:
     QWidget *m_timeRangeWidget = nullptr;
     QVBoxLayout *m_timeRangeLayout = nullptr;
     QButtonGroup *m_timeRangeGroup = nullptr;
-    std::array<QPushButton *, TimeRangeCount> m_timeRangeButtons{};
+    QVector<QPushButton *> m_timeRangeButtons;
+    QLabel *m_timeRangeEmptyLabel = nullptr;
 
     QWidget *m_leftBottomWidget = nullptr;
     QStackedLayout *m_leftBottomStack = nullptr;
@@ -190,6 +193,7 @@ private:
     QVector<VideoRecordInfo> videoRecords;
 
     QVector<SnapshotInfo> snapshots;
+    QVector<SnapshotInfo> daySnapshots;
     SnapshotService snapshotService;
     LogService logService;
 
