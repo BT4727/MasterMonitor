@@ -10,11 +10,10 @@
 #include <QSaveFile>
 #include <QFileInfo>
 
-ConfigFileModel::ConfigFileModel() {}
-
 QString ConfigFileModel::configFilePath(
     const QString &username) const
 {
+    // 生成应用程序bin目录下按用户名区分的配置文件路径。
     const QString configDirectory =
         QCoreApplication::applicationDirPath()
         + QStringLiteral("/config");
@@ -27,6 +26,7 @@ bool ConfigFileModel::ensureDirectory(
     const QString &directoryPath,
     QString &errorMessage) const
 {
+    // 确保指定目录存在，必要时递归创建。
     QDir directory(directoryPath);
 
     if (directory.exists())
@@ -45,6 +45,7 @@ bool ConfigFileModel::save(
     const SystemConfigData &config,
     QString &errorMessage) const
 {
+    // 将系统配置序列化为JSON并以原子方式写入文件。
     const QString configDirectory =
         QFileInfo(filePath).absolutePath();
 
@@ -104,6 +105,7 @@ bool ConfigFileModel::load(
     SystemConfigData &config,
     QString &errorMessage) const
 {
+    // 解析JSON配置，并将已保存的通道设置恢复到数据结构。
     QFile file(filePath);
 
     if (!file.open(QIODevice::ReadOnly)) {

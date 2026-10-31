@@ -3,7 +3,6 @@
 #include <QAbstractItemView>
 #include <QDate>
 #include <QHeaderView>
-#include <QItemSelectionModel>
 #include <QMessageBox>
 #include <QTableWidgetItem>
 #include <QTime>
@@ -13,6 +12,7 @@
 LogWidget::LogWidget(QWidget *parent)
     : QWidget(parent)
 {
+    // 创建日志页面并默认显示操作日志。
     mainLayout = new QHBoxLayout(this);
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->setSpacing(12);
@@ -28,6 +28,7 @@ LogWidget::LogWidget(QWidget *parent)
 
 void LogWidget::initLeftArea()
 {
+    // 创建操作日志与异常日志的类别切换区。
     leftWidget = new QWidget(this);
     leftLayout = new QVBoxLayout(leftWidget);
     leftLayout->setContentsMargins(0, 0, 0, 0);
@@ -52,6 +53,7 @@ void LogWidget::initLeftArea()
 
 void LogWidget::initRightArea()
 {
+    // 创建日志筛选、表格和分页操作区域。
     rightWidget = new QWidget(this);
     rightLayout = new QVBoxLayout(rightWidget);
     rightLayout->setContentsMargins(0, 0, 0, 0);
@@ -72,6 +74,7 @@ void LogWidget::initRightArea()
 
 void LogWidget::initFilterArea()
 {
+    // 创建时间范围和通道筛选控件。
     filterWidget = new QWidget(rightWidget);
     filterLayout = new QHBoxLayout(filterWidget);
     filterLayout->setContentsMargins(0, 0, 0, 0);
@@ -105,25 +108,28 @@ void LogWidget::initFilterArea()
 
 void LogWidget::initTables()
 {
+    // 创建带勾选列的操作日志和异常事件两种只读表格。
     const std::array<QStringList, LogTypeCount> headers = {
         QStringList{
-            QStringLiteral("日志ID"), QStringLiteral("操作用户"),
+            QStringLiteral("选择"), QStringLiteral("日志ID"), QStringLiteral("操作用户"),
             QStringLiteral("操作时间"), QStringLiteral("操作类型"),
             QStringLiteral("操作结果"), QStringLiteral("描述")
         },
         QStringList{
-            QStringLiteral("事件编号"), QStringLiteral("触发时间"),
+            QStringLiteral("选择"), QStringLiteral("事件编号"), QStringLiteral("触发时间"),
             QStringLiteral("通道"), QStringLiteral("事件类型"),
             QStringLiteral("图片数量"), QStringLiteral("视频路径")
         }
     };
 
     for (int index = 0; index < LogTypeCount; ++index) {
-        QTableWidget *table = new QTableWidget(0, 6, tableWidget);
+        QTableWidget *table = new QTableWidget(0, 7, tableWidget);
         table->setHorizontalHeaderLabels(headers[index]);
         table->horizontalHeader()->setVisible(true);
         table->verticalHeader()->setVisible(false);
         table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+        table->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Fixed);
+        table->setColumnWidth(0, 52);
         table->setSelectionBehavior(QAbstractItemView::SelectRows);
         table->setSelectionMode(QAbstractItemView::ExtendedSelection);
         table->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -137,13 +143,14 @@ void LogWidget::initTables()
 
 void LogWidget::initPagerArea()
 {
+    // 创建删除、关联查看和分页控制按钮。
     pagerWidget = new QWidget(rightWidget);
     pagerLayout = new QHBoxLayout(pagerWidget);
     pagerLayout->setContentsMargins(0, 0, 0, 0);
     pagerLayout->setSpacing(8);
 
     relatedButton = new QPushButton(QStringLiteral("查看关联"), pagerWidget);
-    deleteSelectedButton = new QPushButton(QStringLiteral("删除所选"), pagerWidget);
+    deleteSelectedButton = new QPushButton(QStringLiteral("删除"), pagerWidget);
     deleteThirtyDaysButton = new QPushButton(QStringLiteral("删除30天前"), pagerWidget);
     deleteRangeButton = new QPushButton(QStringLiteral("删除筛选范围"), pagerWidget);
     previousButton = new QPushButton(QStringLiteral("上一页"), pagerWidget);
@@ -164,6 +171,7 @@ void LogWidget::initPagerArea()
 
 void LogWidget::initConnect()
 {
+    // 连接日志类别、查询、分页、关联查看和删除操作。
     connect(operationLogButton, &QPushButton::clicked,
             this, [this]() { setLogType(OperationLog); });
     connect(exceptionLogButton, &QPushButton::clicked,
@@ -176,6 +184,11 @@ void LogWidget::initConnect()
             this, &LogWidget::deleteLogsBeforeThirtyDays);
     connect(deleteRangeButton, &QPushButton::clicked,
             this, &LogWidget::deleteLogsInRange);
+
+    for (QTableWidget *table : tables) {
+        connect(table, &QTableWidget::itemChanged,
+                this, &LogWidget::updateDeleteButtonText);
+    }
 
     connect(previousButton, &QPushButton::clicked, this, [this]() {
         int &page = currentPages[currentLogType];
@@ -201,16 +214,19 @@ void LogWidget::initConnect()
 
 void LogWidget::setCurrentUser(const QString &username)
 {
+    // 切换日志查询用户并清空上一个用户的界面数据。
     currentUsername = username.trimmed();
     currentPages = {1, 1};
     operationLogs.clear();
     eventLogs.clear();
     tables[OperationLog]->setRowCount(0);
     tables[ExceptionLog]->setRowCount(0);
+    updateDeleteButtonText();
 }
 
 void LogWidget::showEvent(QShowEvent *event)
 {
+    // 页面显示时刷新默认时间范围及当前日志页。
     QWidget::showEvent(event);
     if (useDefaultTimeRange)
         endDateTimeEdit->setDateTime(QDateTime::currentDateTime().addSecs(1));
@@ -220,10 +236,12 @@ void LogWidget::showEvent(QShowEvent *event)
 
 void LogWidget::setLogType(LogType type)
 {
+    // 切换操作日志或异常日志表格并刷新数据。
     currentLogType = type;
     tableStack->setCurrentIndex(type);
     logTypeGroup->button(type)->setChecked(true);
     relatedButton->setEnabled(type == ExceptionLog);
+    updateDeleteButtonText();
     if (!currentUsername.isEmpty())
         refreshCurrentPage();
     else
@@ -232,6 +250,7 @@ void LogWidget::setLogType(LogType type)
 
 void LogWidget::queryLogs()
 {
+    // 按当前筛选条件从第一页开始查询日志。
     useDefaultTimeRange = false;
     currentPages[currentLogType] = 1;
     refreshCurrentPage();
@@ -239,6 +258,7 @@ void LogWidget::queryLogs()
 
 void LogWidget::resetFilter()
 {
+    // 恢复默认时间范围和全部通道筛选。
     useDefaultTimeRange = true;
     startDateTimeEdit->setDateTime(QDateTime(QDate(2000, 1, 1), QTime(0, 0, 0)));
     endDateTimeEdit->setDateTime(QDateTime::currentDateTime().addSecs(1));
@@ -251,6 +271,7 @@ void LogWidget::resetFilter()
 
 void LogWidget::refreshCurrentPage()
 {
+    // 查询当前类别和页码的数据，并刷新对应表格。
     if (currentUsername.isEmpty()) {
         updatePagination(0);
         return;
@@ -293,6 +314,7 @@ void LogWidget::refreshCurrentPage()
 
 void LogWidget::updatePagination(int totalCount)
 {
+    // 根据查询总量更新页数和翻页按钮状态。
     int &page = currentPages[currentLogType];
     int &pageCount = totalPages[currentLogType];
     pageCount = qMax(1, (totalCount + PageSize - 1) / PageSize);
@@ -304,64 +326,97 @@ void LogWidget::updatePagination(int totalCount)
 
 void LogWidget::fillOperationTable()
 {
+    // 将操作日志记录填入操作日志表格。
     QTableWidget *table = tables[OperationLog];
     table->setRowCount(operationLogs.size());
 
     for (int row = 0; row < operationLogs.size(); ++row) {
         const OperationLogInfo &log = operationLogs.at(row);
+        QTableWidgetItem *selectionItem = new QTableWidgetItem;
+        selectionItem->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable
+                                | Qt::ItemIsUserCheckable);
+        selectionItem->setCheckState(Qt::Unchecked);
+        selectionItem->setTextAlignment(Qt::AlignCenter);
+        table->setItem(row, 0, selectionItem);
+
         QTableWidgetItem *idItem = new QTableWidgetItem(QString::number(log.id));
         idItem->setData(Qt::UserRole, QVariant::fromValue(log.id));
-        table->setItem(row, 0, idItem);
-        table->setItem(row, 1, new QTableWidgetItem(log.username));
-        table->setItem(row, 2, new QTableWidgetItem(
+        table->setItem(row, 1, idItem);
+        table->setItem(row, 2, new QTableWidgetItem(log.username));
+        table->setItem(row, 3, new QTableWidgetItem(
             log.createTime.toString(QStringLiteral("yyyy-MM-dd HH:mm:ss"))));
-        table->setItem(row, 3, new QTableWidgetItem(operationTypeName(log.operationType)));
-        table->setItem(row, 4, new QTableWidgetItem(
+        table->setItem(row, 4, new QTableWidgetItem(operationTypeName(log.operationType)));
+        table->setItem(row, 5, new QTableWidgetItem(
             log.success ? QStringLiteral("成功") : QStringLiteral("失败")));
         QTableWidgetItem *descriptionItem = new QTableWidgetItem(log.description);
         descriptionItem->setToolTip(log.description);
-        table->setItem(row, 5, descriptionItem);
+        table->setItem(row, 6, descriptionItem);
     }
+
+    updateDeleteButtonText();
 }
 
 void LogWidget::fillExceptionTable()
 {
+    // 将异常事件及其关联媒体信息填入异常日志表格。
     QTableWidget *table = tables[ExceptionLog];
     table->setRowCount(eventLogs.size());
 
     for (int row = 0; row < eventLogs.size(); ++row) {
         const EventLogInfo &event = eventLogs.at(row);
+        QTableWidgetItem *selectionItem = new QTableWidgetItem;
+        selectionItem->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable
+                                | Qt::ItemIsUserCheckable);
+        selectionItem->setCheckState(Qt::Unchecked);
+        selectionItem->setTextAlignment(Qt::AlignCenter);
+        table->setItem(row, 0, selectionItem);
+
         QTableWidgetItem *idItem = new QTableWidgetItem(QString::number(event.id));
         idItem->setData(Qt::UserRole, QVariant::fromValue(event.id));
         idItem->setData(Qt::UserRole + 1, QVariant::fromValue(event.videoId));
-        table->setItem(row, 0, idItem);
-        table->setItem(row, 1, new QTableWidgetItem(
-            event.createTime.toString(QStringLiteral("yyyy-MM-dd HH:mm:ss.zzz"))));
+        table->setItem(row, 1, idItem);
         table->setItem(row, 2, new QTableWidgetItem(
+            event.createTime.toString(QStringLiteral("yyyy-MM-dd HH:mm:ss.zzz"))));
+        table->setItem(row, 3, new QTableWidgetItem(
             event.channelNo == 0 ? QStringLiteral("系统")
                                  : QStringLiteral("通道%1").arg(event.channelNo)));
-        table->setItem(row, 3, new QTableWidgetItem(eventTypeName(event.eventType)));
-        table->setItem(row, 4, new QTableWidgetItem(QString::number(event.imageCount)));
+        table->setItem(row, 4, new QTableWidgetItem(eventTypeName(event.eventType)));
+        table->setItem(row, 5, new QTableWidgetItem(QString::number(event.imageCount)));
         QTableWidgetItem *pathItem = new QTableWidgetItem(event.videoPath);
         pathItem->setToolTip(event.videoPath);
-        table->setItem(row, 5, pathItem);
+        table->setItem(row, 6, pathItem);
     }
+
+    updateDeleteButtonText();
 }
 
 QVector<qulonglong> LogWidget::selectedLogIds() const
 {
+    // 收集当前表格中已勾选日志的数据库编号。
     QVector<qulonglong> ids;
-    const QModelIndexList rows = tables[currentLogType]->selectionModel()->selectedRows();
-    for (const QModelIndex &rowIndex : rows) {
-        QTableWidgetItem *item = tables[currentLogType]->item(rowIndex.row(), 0);
-        if (item != nullptr)
-            ids.append(item->data(Qt::UserRole).toULongLong());
+    QTableWidget *table = tables[currentLogType];
+    for (int row = 0; row < table->rowCount(); ++row) {
+        QTableWidgetItem *selectionItem = table->item(row, 0);
+        QTableWidgetItem *idItem = table->item(row, 1);
+        if (selectionItem != nullptr && idItem != nullptr
+            && selectionItem->checkState() == Qt::Checked) {
+            ids.append(idItem->data(Qt::UserRole).toULongLong());
+        }
     }
     return ids;
 }
 
+void LogWidget::updateDeleteButtonText()
+{
+    // 根据当前表格勾选数量切换单条删除或批量删除文字。
+    const int selectedCount = selectedLogIds().size();
+    deleteSelectedButton->setText(
+        selectedCount >= 2 ? QStringLiteral("批量删除") : QStringLiteral("删除"));
+}
+
 void LogWidget::deleteSelectedLogs()
 {
+    // 二次确认后删除所选日志并记录删除操作结果。
     const QVector<qulonglong> ids = selectedLogIds();
     if (ids.isEmpty()) {
         QMessageBox::information(this, QStringLiteral("删除日志"),
@@ -369,7 +424,10 @@ void LogWidget::deleteSelectedLogs()
         return;
     }
 
-    if (!confirmDelete(QStringLiteral("确定删除选中的%1条日志吗？").arg(ids.size())))
+    const QString confirmMessage = ids.size() == 1
+        ? QStringLiteral("确定删除选中的日志吗？")
+        : QStringLiteral("确定批量删除选中的%1条日志吗？").arg(ids.size());
+    if (!confirmDelete(confirmMessage))
         return;
 
     QString errorMessage;
@@ -390,6 +448,7 @@ void LogWidget::deleteSelectedLogs()
 
 void LogWidget::deleteLogsBeforeThirtyDays()
 {
+    // 二次确认后删除当前类别中30天以前的日志。
     if (!confirmDelete(QStringLiteral("确定删除30天前的全部当前类型日志吗？")))
         return;
 
@@ -413,6 +472,7 @@ void LogWidget::deleteLogsBeforeThirtyDays()
 
 void LogWidget::deleteLogsInRange()
 {
+    // 二次确认后按当前时间与通道筛选条件批量删除日志。
     const QDateTime startTime = startDateTimeEdit->dateTime();
     const QDateTime endTime = endDateTimeEdit->dateTime();
     if (endTime <= startTime) {
@@ -444,10 +504,11 @@ void LogWidget::deleteLogsInRange()
 
 void LogWidget::openRelatedVideo(int row, int)
 {
+    // 从异常事件行读取关联录像编号并请求打开回放。
     if (currentLogType != ExceptionLog || row < 0)
         return;
 
-    QTableWidgetItem *item = tables[ExceptionLog]->item(row, 0);
+    QTableWidgetItem *item = tables[ExceptionLog]->item(row, 1);
     if (item == nullptr)
         return;
 
@@ -463,6 +524,7 @@ void LogWidget::openRelatedVideo(int row, int)
 
 QString LogWidget::operationTypeName(const QString &type) const
 {
+    // 将数据库操作类型转换为界面中文名称。
     if (type == QStringLiteral("login"))
         return QStringLiteral("登录");
     if (type == QStringLiteral("logout"))
@@ -482,6 +544,7 @@ QString LogWidget::operationTypeName(const QString &type) const
 
 QString LogWidget::eventTypeName(const QString &type) const
 {
+    // 将数据库事件类型转换为界面中文名称。
     if (type == QStringLiteral("person_detected"))
         return QStringLiteral("检测到移动目标");
     if (type == QStringLiteral("disk_low"))
@@ -491,6 +554,7 @@ QString LogWidget::eventTypeName(const QString &type) const
 
 bool LogWidget::confirmDelete(const QString &message) const
 {
+    // 显示默认选择“否”的删除确认对话框。
     return QMessageBox::question(
         const_cast<LogWidget *>(this), QStringLiteral("确认删除"), message,
         QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes;
@@ -499,6 +563,7 @@ bool LogWidget::confirmDelete(const QString &message) const
 void LogWidget::recordDeleteResult(bool success, const QString &targetType,
                                    int count, const QString &detail)
 {
+    // 将删除操作结果写入操作日志，不记录敏感凭据。
     const int channelNo = channelComboBox->currentData().toInt();
     QString description = success
         ? QStringLiteral("删除%1条%2记录").arg(count).arg(targetType)

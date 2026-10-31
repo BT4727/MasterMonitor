@@ -7,11 +7,13 @@
 #include <QVariantMap>
 EventRecordModel::EventRecordModel()
 {
+    // 为异常事件模型创建独立数据库连接名。
     connectionName = QStringLiteral("eventRecord_%1").arg(reinterpret_cast<quintptr>(this), 0, 16);
 }
 
 EventRecordModel::~EventRecordModel()
 {
+    // 关闭并移除异常事件模型持有的数据库连接。
     if (!database.isValid())
         return;
 
@@ -25,6 +27,7 @@ EventRecordModel::~EventRecordModel()
 
 bool EventRecordModel::openDatabase(QString &errorMessage)
 {
+    // 创建或打开异常事件模块专用数据库连接。
     if (!QSqlDatabase::contains(connectionName)) {
         database = QSqlDatabase::addDatabase(
             QStringLiteral("QMYSQL"),
@@ -53,6 +56,7 @@ bool EventRecordModel::insertDiskLowEvent(
     const QString &storagePath,
     QString &errorMessage)
 {
+    // 将磁盘剩余空间告警写入异常事件表。
     if (!openDatabase(errorMessage))
         return false;
 
@@ -83,6 +87,7 @@ bool EventRecordModel::searchPage(const QDateTime &startTime, const QDateTime &e
                                   QVector<EventLogInfo> &events, int &totalCount,
                                   QString &errorMessage)
 {
+    // 分页查询异常事件，并统计关联图片数及录像路径。
     events.clear();
     totalCount = 0;
 
@@ -158,6 +163,7 @@ bool EventRecordModel::searchPage(const QDateTime &startTime, const QDateTime &e
 bool EventRecordModel::deleteByIds(const QVector<qulonglong> &eventIds,
                                    QString &errorMessage)
 {
+    // 按事件编号集合删除指定异常记录。
     if (eventIds.isEmpty())
         return true;
 
@@ -176,6 +182,7 @@ bool EventRecordModel::deleteByIds(const QVector<qulonglong> &eventIds,
 
 bool EventRecordModel::deleteBefore(const QDateTime &time, QString &errorMessage)
 {
+    // 删除指定时间之前的异常事件。
     QVariantMap bindings;
     bindings.insert(QStringLiteral(":delete_time"), time);
     return deleteMatchingEvents(
@@ -186,6 +193,7 @@ bool EventRecordModel::deleteRange(const QDateTime &startTime,
                                    const QDateTime &endTime, int channelNo,
                                    QString &errorMessage)
 {
+    // 按时间区间及可选通道删除异常事件。
     QString condition = QStringLiteral(
         "create_time >= :start_time AND create_time < :end_time");
     QVariantMap bindings;
@@ -204,6 +212,7 @@ bool EventRecordModel::deleteMatchingEvents(const QString &condition,
                                             const QVariantMap &bindings,
                                             QString &errorMessage)
 {
+    // 在事务中解除媒体外键关联后删除匹配事件，避免留下悬空关系。
     if (!openDatabase(errorMessage))
         return false;
 

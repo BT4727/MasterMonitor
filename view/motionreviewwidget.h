@@ -34,43 +34,43 @@ private:
     void updateVideoColumnWidths();
 
     // 模拟总量与每页容量分别设置
-    int m_totalVideoCount = 17;
-    int m_videoPageSize = 4;
-    int m_videoCurrentPage = 1;
-    int m_videoTotalPages = 1;
+    int totalVideoCount = 17;
+    int videoPageSize = 4;
+    int videoCurrentPage = 1;
+    int videoTotalPages = 1;
 
-    QPixmap m_videoThumbnail;
-    QPixmap m_blackMonitorImage;
+    QPixmap videoThumbnail;
+    QPixmap blackMonitorImage;
 
-    QHBoxLayout *m_mainLayout = nullptr;
+    QHBoxLayout *mainLayout = nullptr;
 
     // 左侧区域
-    QWidget *m_leftWidget = nullptr;
-    QVBoxLayout *m_leftLayout = nullptr;
+    QWidget *leftWidget = nullptr;
+    QVBoxLayout *leftLayout = nullptr;
 
-    QWidget *m_filterWidget = nullptr;
-    QHBoxLayout *m_filterLayout = nullptr;
-    QDateTimeEdit *m_dateTimeEdit = nullptr;
-    QComboBox *m_channelComboBox = nullptr;
+    QWidget *filterWidget = nullptr;
+    QHBoxLayout *filterLayout = nullptr;
+    QDateTimeEdit *dateTimeEdit = nullptr;
+    QComboBox *channelComboBox = nullptr;
 
-    QTableWidget *m_videoTable = nullptr;
+    QTableWidget *videoTable = nullptr;
 
-    QWidget *m_videoPagerWidget = nullptr;
-    QHBoxLayout *m_videoPagerLayout = nullptr;
-    QPushButton *m_videoPreviousButton = nullptr;
-    QLabel *m_videoPageLabel = nullptr;
-    QPushButton *m_videoNextButton = nullptr;
+    QWidget *videoPagerWidget = nullptr;
+    QHBoxLayout *videoPagerLayout = nullptr;
+    QPushButton *videoPreviousButton = nullptr;
+    QLabel *videoPageLabel = nullptr;
+    QPushButton *videoNextButton = nullptr;
 
     // 右侧区域
-    QWidget *m_rightWidget = nullptr;
-    QVBoxLayout *m_rightLayout = nullptr;
-    QLabel *m_videoDisplayLabel = nullptr;
+    QWidget *rightWidget = nullptr;
+    QVBoxLayout *rightLayout = nullptr;
+    QLabel *videoDisplayLabel = nullptr;
 
-    QWidget *m_videoControlsWidget = nullptr;
-    QHBoxLayout *m_videoControlsLayout = nullptr;
-    QPushButton *m_pauseButton = nullptr;
-    QPushButton *m_screenshotButton = nullptr;
-    QComboBox *m_speedComboBox = nullptr;
+    QWidget *videoControlsWidget = nullptr;
+    QHBoxLayout *videoControlsLayout = nullptr;
+    QPushButton *pauseButton = nullptr;
+    QPushButton *screenshotButton = nullptr;
+    QComboBox *speedComboBox = nullptr;
 };
 
 #endif // MOTIONREVIEWWIDGET_H

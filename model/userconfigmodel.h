@@ -4,7 +4,6 @@
 class UserConfigModel
 {
 public:
-    UserConfigModel();
     enum class Result {
         Success,
         NotFound,

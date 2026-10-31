@@ -4,13 +4,12 @@
 #include "../model/userconfigmodel.h"
 
 #include <QDir>
-SystemConfigService::SystemConfigService() {}
-
 SystemConfigService::Result SystemConfigService::load(
     const QString &username,
     SystemConfigData &config,
     QString &errorMessage) const
 {
+    // 先从数据库取得用户配置文件路径，再读取本地配置内容。
     UserConfigModel userConfigModel;
     QString configPath;
 
@@ -37,6 +36,7 @@ SystemConfigService::Result SystemConfigService::save(
     const SystemConfigData &config,
     QString &errorMessage) const
 {
+    // 校验配置后写入本地文件，并将配置文件路径保存到数据库。
     if (username.trimmed().isEmpty()) {
         errorMessage = QStringLiteral("当前用户无效");
         return Result::UserNotFound;

@@ -50,6 +50,7 @@ private:
     void handleLoginButtonClicked();
     void openSettingsPage();
     void updateRecordDirectory();
+    void updateChannelNames();
     void initStorageMonitor(const QString &storagePath);
 
     void updateTime();
@@ -82,67 +83,67 @@ private:
 
     // 当前状态
     QString currentUsername;
-    int m_currentChannel = 0;
-    bool m_singleChannelMode = false;
+    int currentChannel = 0;
+    bool singleChannelMode = false;
     bool loggedIn = false;
 
     // 整体纵向布局
-    QVBoxLayout *m_mainLayout = nullptr;
+    QVBoxLayout *mainLayout = nullptr;
 
     // 顶部横向布局
-    QWidget *m_headerWidget = nullptr;
-    QHBoxLayout *m_headerLayout = nullptr;
-    QLabel *m_titleLabel = nullptr;
+    QWidget *headerWidget = nullptr;
+    QHBoxLayout *headerLayout = nullptr;
+    QLabel *titleLabel = nullptr;
 
     // 顶部右侧纵向布局
-    QWidget *m_headerRightWidget = nullptr;
-    QVBoxLayout *m_headerRightLayout = nullptr;
+    QWidget *headerRightWidget = nullptr;
+    QVBoxLayout *headerRightLayout = nullptr;
 
     // 时间及登录状态区域
-    QWidget *m_statusWidget = nullptr;
-    QHBoxLayout *m_statusLayout = nullptr;
-    QVBoxLayout *m_userLayout = nullptr;
-    QLabel *m_timeLabel = nullptr;
-    QPushButton *m_loginButton = nullptr;
-    QLabel *m_userLabel = nullptr;
-    QTimer *m_clockTimer = nullptr;
+    QWidget *statusWidget = nullptr;
+    QHBoxLayout *statusLayout = nullptr;
+    QVBoxLayout *userLayout = nullptr;
+    QLabel *timeLabel = nullptr;
+    QPushButton *loginButton = nullptr;
+    QLabel *userLabel = nullptr;
+    QTimer *clockTimer = nullptr;
 
     // 五个导航按钮
-    QWidget *m_navigationWidget = nullptr;
-    QHBoxLayout *m_navigationLayout = nullptr;
-    QButtonGroup *m_navigationGroup = nullptr;
-    std::array<QPushButton *, NavigationCount> m_navigationButtons{};
+    QWidget *navigationWidget = nullptr;
+    QHBoxLayout *navigationLayout = nullptr;
+    QButtonGroup *navigationGroup = nullptr;
+    std::array<QPushButton *, NavigationCount> navigationButtons{};
 
     // 四个内部内容页面
-    QWidget *m_contentWidget = nullptr;
-    QStackedLayout *m_pageStack = nullptr;
-    std::array<QWidget *, PageCount> m_pages{};
+    QWidget *contentWidget = nullptr;
+    QStackedLayout *pageStack = nullptr;
+    std::array<QWidget *, PageCount> pages{};
 
     // 监控页面整体布局
-    QHBoxLayout *m_monitorLayout = nullptr;
+    QHBoxLayout *monitorLayout = nullptr;
 
     // 左侧通道列表
-    QWidget *m_channelWidget = nullptr;
-    QVBoxLayout *m_channelLayout = nullptr;
-    QButtonGroup *m_channelGroup = nullptr;
-    std::array<QPushButton *, ChannelCount> m_channelButtons{};
+    QWidget *channelWidget = nullptr;
+    QVBoxLayout *channelLayout = nullptr;
+    QButtonGroup *channelGroup = nullptr;
+    std::array<QPushButton *, ChannelCount> channelButtons{};
 
     // 右侧预览及操作区域
-    QWidget *m_monitorRightWidget = nullptr;
-    QVBoxLayout *m_monitorRightLayout = nullptr;
+    QWidget *monitorRightWidget = nullptr;
+    QVBoxLayout *monitorRightLayout = nullptr;
 
     // 预览区域
-    QWidget *m_previewWidget = nullptr;
-    QGridLayout *m_previewLayout = nullptr;
-    std::array<QLabel *, ChannelCount> m_previewLabels{};
+    QWidget *previewWidget = nullptr;
+    QGridLayout *previewLayout = nullptr;
+    std::array<QLabel *, ChannelCount> previewLabels{};
 
     // 操作区域
-    QWidget *m_controlsWidget = nullptr;
-    QHBoxLayout *m_controlsLayout = nullptr;
-    QPushButton *m_singleChannelButton = nullptr;
-    QPushButton *m_fourChannelButton = nullptr;
-    QButtonGroup *m_modeGroup = nullptr;
-    QCheckBox *m_motionCheckBox = nullptr;
+    QWidget *controlsWidget = nullptr;
+    QHBoxLayout *controlsLayout = nullptr;
+    QPushButton *singleChannelButton = nullptr;
+    QPushButton *fourChannelButton = nullptr;
+    QButtonGroup *modeGroup = nullptr;
+    QCheckBox *motionCheckBox = nullptr;
 private slots:
     void refreshMonitorFrames();
     void stopMonitorService();

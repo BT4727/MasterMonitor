@@ -7,6 +7,7 @@
 StorageMonitorService::StorageMonitorService(QObject *parent)
     : QObject(parent)
 {
+    // 配置周期检测，并在检测到低空间时通知界面。
     checkTimer.setInterval(CheckIntervalMs);
 
     connect(
@@ -18,6 +19,7 @@ StorageMonitorService::StorageMonitorService(QObject *parent)
 
 void StorageMonitorService::start(const QString &path)
 {
+    // 设置监测路径并立即执行一次磁盘空间检查。
     setStoragePath(path);
 
     if (!checkTimer.isActive())
@@ -28,6 +30,7 @@ void StorageMonitorService::start(const QString &path)
 
 void StorageMonitorService::setStoragePath(const QString &path)
 {
+    // 更新磁盘监测目标，避免相同路径重复触发状态重置。
     const QString normalizedPath = path.trimmed();
 
     if (storagePath == normalizedPath)
@@ -42,11 +45,13 @@ void StorageMonitorService::setStoragePath(const QString &path)
 
 void StorageMonitorService::stop()
 {
+    // 停止磁盘空间定时检查。
     checkTimer.stop();
 }
 
 void StorageMonitorService::checkStorageSpace()
 {
+    // 计算剩余容量比例，在首次低于阈值时记录并发出告警。
     if (storagePath.isEmpty())
         return;
 
@@ -59,6 +64,7 @@ void StorageMonitorService::checkStorageSpace()
         return;
     }
 
+    // 使用可用字节与总字节的比例判断阈值，避免依赖格式化字符串。
     const double remainingRatio =
         static_cast<double>(storageInfo.bytesAvailable())
         / static_cast<double>(storageInfo.bytesTotal());

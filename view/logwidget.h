@@ -48,6 +48,7 @@ private:
     void updatePagination(int totalCount);
     void fillOperationTable();
     void fillExceptionTable();
+    void updateDeleteButtonText();
     void queryLogs();
     void resetFilter();
     void deleteSelectedLogs();

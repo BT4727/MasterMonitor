@@ -4,7 +4,6 @@
 class AdminUserService
 {
 public:
-    AdminUserService();
     enum class LoginResult {
         Success,
         InvalidCredentials,

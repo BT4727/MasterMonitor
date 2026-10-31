@@ -5,11 +5,11 @@
 #include <QSqlDatabase>
 #include <QSqlError>
 #include <QSqlQuery>
-UserConfigModel::UserConfigModel() {}
 UserConfigModel::Result UserConfigModel::findConfigPath(
     const QString &username,
     QString &configPath) const
 {
+    // 根据用户名查询其配置JSON文件路径。
     configPath.clear();
 
     QSqlDatabase database =
@@ -50,6 +50,7 @@ UserConfigModel::Result UserConfigModel::saveConfigPath(
     const QString &username,
     const QString &configPath) const
 {
+    // 新增或更新用户与本地配置文件路径的数据库关联。
     QSqlDatabase database =
         DBConn::getInstance()->getDb();
 

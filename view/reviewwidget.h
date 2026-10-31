@@ -90,99 +90,97 @@ private:
     void playVideoAtRow(int row);
     QString formatPlaybackTime(qint64 milliseconds) const;
 
-    PreviewMode m_previewMode = VideoPreview;
-    int m_videoCurrentPage = 1;
-    int m_videoTotalPages = 1;
-    int m_imageCurrentPage = 1;
-    int m_imageTotalPages = 1;
+    PreviewMode previewMode = VideoPreview;
+    int videoCurrentPage = 1;
+    int videoTotalPages = 1;
+    int imageCurrentPage = 1;
+    int imageTotalPages = 1;
 
     // 每页显示数量
-    int m_videoPageSize = 4;
+    int videoPageSize = 4;
 
-    QPixmap m_videoThumbnail;
-    QPixmap m_blackMonitorImage;
+    QPixmap videoThumbnail;
+    QPixmap blackMonitorImage;
 
-    QHBoxLayout *m_mainLayout = nullptr;
+    QHBoxLayout *mainLayout = nullptr;
 
     // 左侧区域
-    QWidget *m_leftWidget = nullptr;
-    QVBoxLayout *m_leftLayout = nullptr;
+    QWidget *leftWidget = nullptr;
+    QVBoxLayout *leftLayout = nullptr;
 
-    QWidget *m_filterWidget = nullptr;
-    QGridLayout *m_filterLayout = nullptr;
-    QDateTimeEdit *m_dateTimeEdit = nullptr;
-    QComboBox *m_channelComboBox = nullptr;
+    QWidget *filterWidget = nullptr;
+    QGridLayout *filterLayout = nullptr;
+    QDateTimeEdit *dateTimeEdit = nullptr;
+    QComboBox *channelComboBox = nullptr;
     QTimeEdit *startTimeEdit = nullptr;
     QTimeEdit *endTimeEdit = nullptr;
     QComboBox *recordTypeComboBox = nullptr;
     QPushButton *searchButton = nullptr;
 
-    QWidget *m_leftContentWidget = nullptr;
-    QStackedLayout *m_leftContentStack = nullptr;
+    QWidget *leftContentWidget = nullptr;
+    QStackedLayout *leftContentStack = nullptr;
 
-    QTableWidget *m_videoTable = nullptr;
+    QTableWidget *videoTable = nullptr;
 
-    QWidget *m_timeRangeWidget = nullptr;
-    QVBoxLayout *m_timeRangeLayout = nullptr;
-    QButtonGroup *m_timeRangeGroup = nullptr;
-    QVector<QPushButton *> m_timeRangeButtons;
-    QLabel *m_timeRangeEmptyLabel = nullptr;
+    QWidget *timeRangeWidget = nullptr;
+    QVBoxLayout *timeRangeLayout = nullptr;
+    QButtonGroup *timeRangeGroup = nullptr;
+    QVector<QPushButton *> timeRangeButtons;
+    QLabel *timeRangeEmptyLabel = nullptr;
 
-    QWidget *m_leftBottomWidget = nullptr;
-    QStackedLayout *m_leftBottomStack = nullptr;
+    QWidget *leftBottomWidget = nullptr;
+    QStackedLayout *leftBottomStack = nullptr;
 
-    QWidget *m_videoPagerWidget = nullptr;
-    QHBoxLayout *m_videoPagerLayout = nullptr;
-    QPushButton *m_videoPreviousButton = nullptr;
-    QLabel *m_videoPageLabel = nullptr;
-    QPushButton *m_videoNextButton = nullptr;
+    QWidget *videoPagerWidget = nullptr;
+    QHBoxLayout *videoPagerLayout = nullptr;
+    QPushButton *videoPreviousButton = nullptr;
+    QLabel *videoPageLabel = nullptr;
+    QPushButton *videoNextButton = nullptr;
 
-    QWidget *m_emptyLeftBottomWidget = nullptr;
+    QWidget *emptyLeftBottomWidget = nullptr;
 
     // 右侧区域
-    QWidget *m_rightWidget = nullptr;
-    QVBoxLayout *m_rightLayout = nullptr;
+    QWidget *rightWidget = nullptr;
+    QVBoxLayout *rightLayout = nullptr;
 
-    QWidget *m_previewModeWidget = nullptr;
-    QHBoxLayout *m_previewModeLayout = nullptr;
-    QPushButton *m_videoPreviewButton = nullptr;
+    QWidget *previewModeWidget = nullptr;
+    QHBoxLayout *previewModeLayout = nullptr;
+    QPushButton *videoPreviewButton = nullptr;
     QPushButton *motionPreviewButton = nullptr;
-    QButtonGroup *m_previewModeGroup = nullptr;
+    QButtonGroup *previewModeGroup = nullptr;
 
-    QWidget *m_previewContentWidget = nullptr;
-    QStackedLayout *m_previewContentStack = nullptr;
+    QWidget *previewContentWidget = nullptr;
+    QStackedLayout *previewContentStack = nullptr;
 
     // 视频预览页
-    QWidget *m_videoPreviewPage = nullptr;
-    QVBoxLayout *m_videoPreviewLayout = nullptr;
-    QLabel *m_videoDisplayLabel = nullptr;
+    QWidget *videoPreviewPage = nullptr;
+    QVBoxLayout *videoPreviewLayout = nullptr;
+    QLabel *videoDisplayLabel = nullptr;
 
-    QWidget *m_videoControlsWidget = nullptr;
-    QVBoxLayout *m_videoControlsLayout = nullptr;
-    QPushButton *m_pauseButton = nullptr;
-    QPushButton *m_screenshotButton = nullptr;
-    QComboBox *m_speedComboBox = nullptr;
+    QWidget *videoControlsWidget = nullptr;
+    QVBoxLayout *videoControlsLayout = nullptr;
+    QPushButton *screenshotButton = nullptr;
+    QComboBox *speedComboBox = nullptr;
 
     // 图片预览页
-    QWidget *m_imagePreviewPage = nullptr;
-    QVBoxLayout *m_imagePreviewLayout = nullptr;
+    QWidget *imagePreviewPage = nullptr;
+    QVBoxLayout *imagePreviewLayout = nullptr;
 
-    QWidget *m_imageGridWidget = nullptr;
-    QGridLayout *m_imageGridLayout = nullptr;
-    std::array<QLabel *, ImagePageSize> m_imageLabels{};
+    QWidget *imageGridWidget = nullptr;
+    QGridLayout *imageGridLayout = nullptr;
+    std::array<QLabel *, ImagePageSize> imageLabels{};
 
-    QWidget *m_imagePagerWidget = nullptr;
-    QHBoxLayout *m_imagePagerLayout = nullptr;
-    QPushButton *m_imagePreviousButton = nullptr;
-    QLabel *m_imagePageLabel = nullptr;
-    QPushButton *m_imageNextButton = nullptr;
+    QWidget *imagePagerWidget = nullptr;
+    QHBoxLayout *imagePagerLayout = nullptr;
+    QPushButton *imagePreviousButton = nullptr;
+    QLabel *imagePageLabel = nullptr;
+    QPushButton *imageNextButton = nullptr;
 
     QMediaPlayer *mediaPlayer = nullptr;
     QAudioOutput *audioOutput = nullptr;
     QVideoWidget *videoWidget = nullptr;
 
-    QPushButton *playButton = nullptr;
-    QPushButton *continueButton = nullptr;
+    QPushButton *playPauseButton = nullptr;
     QPushButton *stopButton = nullptr;
 
     QSlider *progressSlider = nullptr;
@@ -214,7 +212,7 @@ private:
     void showLargeSnapshot();
     void showPreviousSnapshot();
     void showNextSnapshot();
-    void updateSnapshotZoom(int value);
+    void updateSnapshotZoom(double scaleValue);
     void playRelatedVideo();
     void applyPendingSeek();
 
@@ -226,7 +224,8 @@ private:
     QDialog *snapshotDialog = nullptr;
     QGraphicsView *snapshotView = nullptr;
     QGraphicsScene *snapshotScene = nullptr;
-    QSlider *snapshotZoomSlider = nullptr;
+    double snapshotScale = 1.0;
+    int snapshotWheelRemainder = 0;
     QLabel *snapshotMetadataLabel = nullptr;
     QPushButton *previousSnapshotButton = nullptr;
     QPushButton *nextSnapshotButton = nullptr;

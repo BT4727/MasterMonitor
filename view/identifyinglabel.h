@@ -23,8 +23,8 @@ protected:
     void paintEvent(QPaintEvent *event) override;
 
 private:
-    QString m_code;
-    QList<QColor> m_colors;
+    QString code;
+    QList<QColor> colors;
     int randomInt();
 };
 

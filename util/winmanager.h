@@ -17,7 +17,7 @@ public:
     SettingsWidget settingsWidget;
 
 private:
-    WinManager();
+    WinManager() = default;
     static WinManager* instance;
 };
 

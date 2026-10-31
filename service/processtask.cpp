@@ -7,6 +7,7 @@ ProcessTask::ProcessTask(
     QObject *parent)
     : QObject(parent)
 {
+    // 保存帧处理完成后通知采集线程继续工作的信号量。
     this->frameSemaphore = frameSemaphore;
 }
 
@@ -14,6 +15,7 @@ void ProcessTask::processFrame(
     cv::Mat frame,
     const QString &status)
 {
+    // 将采集帧转换成界面图像，叠加状态信息并发布最新结果。
     QImage image;
     QString displayStatus = status;
 
@@ -47,6 +49,7 @@ void ProcessTask::processFrame(
 
 QImage ProcessTask::getImage()
 {
+    // 在线程锁保护下复制当前通道预览图像。
     imageMutex.lock();
     QImage image = channelImage;
     imageMutex.unlock();
@@ -57,6 +60,7 @@ QImage ProcessTask::getImage()
 QImage ProcessTask::matToImage(
     const cv::Mat &frame)
 {
+    // 按OpenCV像素格式转换图像，并复制以脱离Mat生命周期。
     if (frame.empty()) {
         return QImage();
     }
@@ -103,6 +107,7 @@ void ProcessTask::drawStatus(
     QImage &image,
     const QString &status)
 {
+    // 在预览图顶部绘制半透明状态栏和提示文字。
     QPainter painter(&image);
 
     int height = qMin(48, image.height());

@@ -20,31 +20,32 @@
 MainWidget::MainWidget(QWidget *parent)
     : QWidget{parent}
 {
+    // 构建主界面并初始化预览、导航及定时更新功能。
     setWindowTitle(QStringLiteral("智能监控系统"));
     resize(1200, 800);
     setMinimumSize(1000, 650);
 
-    m_mainLayout = new QVBoxLayout(this);
-    m_mainLayout->setContentsMargins(12, 12, 12, 12);
-    m_mainLayout->setSpacing(10);
+    mainLayout = new QVBoxLayout(this);
+    mainLayout->setContentsMargins(12, 12, 12, 12);
+    mainLayout->setSpacing(10);
 
     initHeader();
     initPages();
     initConnections();
 
     // 整体上 : 下 = 3 : 7
-    m_mainLayout->addWidget(m_headerWidget, 3);
-    m_mainLayout->addWidget(m_contentWidget, 7);
+    mainLayout->addWidget(headerWidget, 3);
+    mainLayout->addWidget(contentWidget, 7);
 
     // 默认进入监控页面，未登录，四通道模式
     setCurrentUser(QString());
-    m_pageStack->setCurrentIndex(MonitorPage);
-    m_navigationButtons[MonitorPage]->setChecked(true);
-    m_channelButtons[m_currentChannel]->setChecked(true);
+    pageStack->setCurrentIndex(MonitorPage);
+    navigationButtons[MonitorPage]->setChecked(true);
+    channelButtons[currentChannel]->setChecked(true);
     setSingleChannelMode(false);
 
     updateTime();
-    m_clockTimer->start(1000);
+    clockTimer->start(1000);
     initQss();
     QTimer::singleShot(
         0,
@@ -54,73 +55,74 @@ MainWidget::MainWidget(QWidget *parent)
 
 void MainWidget::initHeader()
 {
-    m_headerWidget = new QWidget(this);
-    m_headerLayout = new QHBoxLayout(m_headerWidget);
-    m_headerLayout->setContentsMargins(0, 0, 0, 0);
-    m_headerLayout->setSpacing(12);
+    // 创建标题、用户操作区和主页面导航按钮。
+    headerWidget = new QWidget(this);
+    headerLayout = new QHBoxLayout(headerWidget);
+    headerLayout->setContentsMargins(0, 0, 0, 0);
+    headerLayout->setSpacing(12);
 
     // 左侧标题
-    m_titleLabel = new QLabel(
-        QStringLiteral("智能监控系统"), m_headerWidget);
+    titleLabel = new QLabel(
+        QStringLiteral("智能监控系统"), headerWidget);
 
-    m_titleLabel->setAlignment(Qt::AlignCenter);
+    titleLabel->setAlignment(Qt::AlignCenter);
 
     // 右侧区域
-    m_headerRightWidget = new QWidget(m_headerWidget);
-    m_headerRightLayout = new QVBoxLayout(m_headerRightWidget);
-    m_headerRightLayout->setContentsMargins(2, 2, 2, 2);
-    m_headerRightLayout->setSpacing(10);
+    headerRightWidget = new QWidget(headerWidget);
+    headerRightLayout = new QVBoxLayout(headerRightWidget);
+    headerRightLayout->setContentsMargins(2, 2, 2, 2);
+    headerRightLayout->setSpacing(10);
 
     // 上部左 : 右 = 3 : 7
-    m_headerLayout->addWidget(m_titleLabel, 3);
-    m_headerLayout->addWidget(m_headerRightWidget, 7);
+    headerLayout->addWidget(titleLabel, 3);
+    headerLayout->addWidget(headerRightWidget, 7);
 
     // 时间及用户状态
-    m_statusWidget = new QWidget(m_headerRightWidget);
-    m_statusLayout = new QHBoxLayout(m_statusWidget);
-    m_statusLayout->setContentsMargins(2, 2, 2, 2);
-    m_statusLayout->setSpacing(12);
+    statusWidget = new QWidget(headerRightWidget);
+    statusLayout = new QHBoxLayout(statusWidget);
+    statusLayout->setContentsMargins(2, 2, 2, 2);
+    statusLayout->setSpacing(12);
 
-    m_timeLabel = new QLabel(m_statusWidget);
-    m_timeLabel->setAlignment(Qt::AlignCenter);
+    timeLabel = new QLabel(statusWidget);
+    timeLabel->setAlignment(Qt::AlignCenter);
 
     // 按钮下面显示用户名
-    m_userLayout = new QVBoxLayout;
-    m_userLayout->setContentsMargins(0, 0, 0, 0);
-    m_userLayout->setSpacing(0);
+    userLayout = new QVBoxLayout;
+    userLayout->setContentsMargins(0, 0, 0, 0);
+    userLayout->setSpacing(0);
 
-    m_loginButton = new QPushButton(
-        QStringLiteral("登录"), m_statusWidget);
+    loginButton = new QPushButton(
+        QStringLiteral("登录"), statusWidget);
 
-    m_userLabel = new QLabel(m_statusWidget);
-    m_userLabel->setAlignment(Qt::AlignCenter);
+    userLabel = new QLabel(statusWidget);
+    userLabel->setAlignment(Qt::AlignCenter);
 
-    m_userLayout->addWidget(m_loginButton);
-    m_userLayout->addWidget(m_userLabel);
+    userLayout->addWidget(loginButton);
+    userLayout->addWidget(userLabel);
 
-    m_statusLayout->addWidget(m_timeLabel, 1);
-    m_statusLayout->addLayout(m_userLayout);
+    statusLayout->addWidget(timeLabel, 1);
+    statusLayout->addLayout(userLayout);
 
     // 导航按钮
-    m_navigationWidget = new QWidget(m_headerRightWidget);
+    navigationWidget = new QWidget(headerRightWidget);
 
     // 外层纵向布局：上留白、按钮行、下留白
-    QVBoxLayout *navigationOuterLayout = new QVBoxLayout(m_navigationWidget);
+    QVBoxLayout *navigationOuterLayout = new QVBoxLayout(navigationWidget);
     navigationOuterLayout->setContentsMargins(2, 2, 2, 2);
     navigationOuterLayout->setSpacing(0);
 
     // 原来的横向布局继续用于排列五个按钮
-    m_navigationLayout = new QHBoxLayout;
-    m_navigationLayout->setContentsMargins(0, 0, 0, 0);
-    m_navigationLayout->setSpacing(6);
+    navigationLayout = new QHBoxLayout;
+    navigationLayout->setContentsMargins(0, 0, 0, 0);
+    navigationLayout->setSpacing(6);
 
     // 1 : 2 : 1，按钮行占导航区域高度的一半
     navigationOuterLayout->addStretch(1);
-    navigationOuterLayout->addLayout(m_navigationLayout, 2);
+    navigationOuterLayout->addLayout(navigationLayout, 2);
     navigationOuterLayout->addStretch(1);
 
-    m_navigationGroup = new QButtonGroup(this);
-    m_navigationGroup->setExclusive(true);
+    navigationGroup = new QButtonGroup(this);
+    navigationGroup->setExclusive(true);
 
     const std::array<QString, NavigationCount> names = {
         QStringLiteral("监控主页面"),
@@ -132,7 +134,7 @@ void MainWidget::initHeader()
 
     for (int i = 0; i < NavigationCount; ++i) {
         QPushButton *button = new QPushButton(
-            names[i], m_navigationWidget);
+            names[i], navigationWidget);
 
         button->setSizePolicy(
             QSizePolicy::Expanding,
@@ -142,99 +144,101 @@ void MainWidget::initHeader()
         // 系统设置按钮用于请求独立页面跳转
         if (i < PageCount) {
             button->setCheckable(true);
-            m_navigationGroup->addButton(button, i);
+            navigationGroup->addButton(button, i);
         }
 
-        m_navigationButtons[i] = button;
-        m_navigationLayout->addWidget(button, 1);
+        navigationButtons[i] = button;
+        navigationLayout->addWidget(button, 1);
     }
 
     // 顶部右侧上 : 下 = 1 : 1
-    m_headerRightLayout->addWidget(m_statusWidget, 1);
-    m_headerRightLayout->addWidget(m_navigationWidget, 1);
+    headerRightLayout->addWidget(statusWidget, 1);
+    headerRightLayout->addWidget(navigationWidget, 1);
 
-    m_clockTimer = new QTimer(this);
+    clockTimer = new QTimer(this);
 }
 
 void MainWidget::initPages()
 {
-    m_contentWidget = new QWidget(this);
-    m_pageStack = new QStackedLayout(m_contentWidget);
-    m_pageStack->setContentsMargins(2, 2, 2, 2);
+    // 创建主页面内容栈并登记各个功能页面。
+    contentWidget = new QWidget(this);
+    pageStack = new QStackedLayout(contentWidget);
+    pageStack->setContentsMargins(2, 2, 2, 2);
 
     // 监控主页面
-    m_pages[MonitorPage] =
-        new QWidget(m_contentWidget);
+    pages[MonitorPage] =
+        new QWidget(contentWidget);
 
     // 普通视频回看
-    m_pages[PlaybackPage] =
-        new ReviewWidget(m_contentWidget);
+    pages[PlaybackPage] =
+        new ReviewWidget(contentWidget);
 
     // 移动侦测回看
-    m_pages[SnapshotPage] =
-        new SnapshotWidget(m_contentWidget);
+    pages[SnapshotPage] =
+        new SnapshotWidget(contentWidget);
 
     // 日志查看暂时保留占位文字
-    m_pages[LogPage] =
-        new LogWidget(m_contentWidget);
+    pages[LogPage] =
+        new LogWidget(contentWidget);
 
-    for (QWidget *page : m_pages)
-        m_pageStack->addWidget(page);
+    for (QWidget *page : pages)
+        pageStack->addWidget(page);
 
     initMonitorPage();
 }
 
 void MainWidget::initMonitorPage()
 {
-    QWidget *page = m_pages[MonitorPage];
+    // 建立监控通道列表、预览区域和画面模式控制区。
+    QWidget *page = pages[MonitorPage];
 
-    m_monitorLayout = new QHBoxLayout(page);
-    m_monitorLayout->setContentsMargins(0, 0, 0, 0);
-    m_monitorLayout->setSpacing(12);
+    monitorLayout = new QHBoxLayout(page);
+    monitorLayout->setContentsMargins(0, 0, 0, 0);
+    monitorLayout->setSpacing(12);
 
     // 左侧通道列表
-    m_channelWidget = new QWidget(page);
-    m_channelLayout = new QVBoxLayout(m_channelWidget);
-    m_channelLayout->setContentsMargins(0, 0, 0, 0);
-    m_channelLayout->setSpacing(12);
+    channelWidget = new QWidget(page);
+    channelLayout = new QVBoxLayout(channelWidget);
+    channelLayout->setContentsMargins(0, 0, 0, 0);
+    channelLayout->setSpacing(12);
 
-    m_channelGroup = new QButtonGroup(this);
-    m_channelGroup->setExclusive(true);
+    channelGroup = new QButtonGroup(this);
+    channelGroup->setExclusive(true);
 
     for (int i = 0; i < ChannelCount; ++i) {
         QPushButton *button = new QPushButton(
-            QStringLiteral("监控通道 %1").arg(i + 1),
-            m_channelWidget);
+            QStringLiteral("通道%1").arg(i + 1),
+            channelWidget);
 
         button->setCheckable(true);
 
-        m_channelButtons[i] = button;
-        m_channelGroup->addButton(button, i);
-        m_channelLayout->addWidget(button);
+        channelButtons[i] = button;
+        channelGroup->addButton(button, i);
+        channelLayout->addWidget(button);
     }
 
-    m_channelLayout->addStretch();
+    channelLayout->addStretch();
 
     // 右侧预览和操作区
-    m_monitorRightWidget = new QWidget(page);
-    m_monitorRightLayout = new QVBoxLayout(m_monitorRightWidget);
-    m_monitorRightLayout->setContentsMargins(0, 0, 0, 0);
-    m_monitorRightLayout->setSpacing(8);
+    monitorRightWidget = new QWidget(page);
+    monitorRightLayout = new QVBoxLayout(monitorRightWidget);
+    monitorRightLayout->setContentsMargins(0, 0, 0, 0);
+    monitorRightLayout->setSpacing(8);
 
     // 监控页面左 : 右 = 2 : 8
-    m_monitorLayout->addWidget(m_channelWidget, 2);
-    m_monitorLayout->addWidget(m_monitorRightWidget, 8);
+    monitorLayout->addWidget(channelWidget, 2);
+    monitorLayout->addWidget(monitorRightWidget, 8);
 
     // 预览区
-    m_previewWidget = new QWidget(m_monitorRightWidget);
+    previewWidget = new QWidget(monitorRightWidget);
 
-    m_previewLayout = new QGridLayout(m_previewWidget);
-    m_previewLayout->setContentsMargins(0, 0, 0, 0);
-    m_previewLayout->setSpacing(2);
+    previewLayout = new QGridLayout(previewWidget);
+    previewLayout->setContentsMargins(0, 0, 0, 0);
+    previewLayout->setSpacing(2);
 
     for (int i = 0; i < 2; ++i) {
-        m_previewLayout->setRowStretch(i, 1);
-        m_previewLayout->setColumnStretch(i, 1);
+        previewLayout->setRowStretch(i, 1);
+        previewLayout->setColumnStretch(i, 1);
     }
 
     // 优先使用资源中的黑色图片
@@ -242,7 +246,7 @@ void MainWidget::initMonitorPage()
     QPixmap blackPixmap(QStringLiteral(":/images/back.jpg"));
 
     for (int i = 0; i < ChannelCount; ++i) {
-        QLabel *label = new QLabel(m_previewWidget);
+        QLabel *label = new QLabel(previewWidget);
 
         label->setAlignment(Qt::AlignCenter);
         label->setMinimumSize(0, 0);
@@ -252,78 +256,79 @@ void MainWidget::initMonitorPage()
         label->setScaledContents(false);
         label->setPixmap(blackPixmap);
 
-        m_previewLabels[i] = label;
-        m_previewLayout->addWidget(label, i / 2, i % 2);
+        previewLabels[i] = label;
+        previewLayout->addWidget(label, i / 2, i % 2);
     }
 
     // 下方操作区
-    m_controlsWidget = new QWidget(m_monitorRightWidget);
-    m_controlsLayout = new QHBoxLayout(m_controlsWidget);
-    m_controlsLayout->setContentsMargins(0, 0, 0, 0);
-    m_controlsLayout->setSpacing(16);
+    controlsWidget = new QWidget(monitorRightWidget);
+    controlsLayout = new QHBoxLayout(controlsWidget);
+    controlsLayout->setContentsMargins(0, 0, 0, 0);
+    controlsLayout->setSpacing(16);
 
-    m_singleChannelButton = new QPushButton(m_controlsWidget);
-    m_singleChannelButton->setIcon(
+    singleChannelButton = new QPushButton(controlsWidget);
+    singleChannelButton->setIcon(
         QIcon(QStringLiteral(":/images/onechannel.png")));
-    m_singleChannelButton->setIconSize(QSize(28, 28));
-    m_singleChannelButton->setToolTip(QStringLiteral("单通道"));
-    m_singleChannelButton->setAccessibleName(
+    singleChannelButton->setIconSize(QSize(28, 28));
+    singleChannelButton->setToolTip(QStringLiteral("单通道"));
+    singleChannelButton->setAccessibleName(
         QStringLiteral("单通道"));
-    m_singleChannelButton->setCheckable(true);
+    singleChannelButton->setCheckable(true);
 
-    m_fourChannelButton = new QPushButton(m_controlsWidget);
-    m_fourChannelButton->setIcon(
+    fourChannelButton = new QPushButton(controlsWidget);
+    fourChannelButton->setIcon(
         QIcon(QStringLiteral(":/images/fourchannel.png")));
-    m_fourChannelButton->setIconSize(QSize(28, 28));
-    m_fourChannelButton->setToolTip(QStringLiteral("4通道"));
-    m_fourChannelButton->setAccessibleName(
+    fourChannelButton->setIconSize(QSize(28, 28));
+    fourChannelButton->setToolTip(QStringLiteral("4通道"));
+    fourChannelButton->setAccessibleName(
         QStringLiteral("4通道"));
-    m_fourChannelButton->setCheckable(true);
+    fourChannelButton->setCheckable(true);
 
-    m_modeGroup = new QButtonGroup(this);
-    m_modeGroup->setExclusive(true);
-    m_modeGroup->addButton(m_singleChannelButton);
-    m_modeGroup->addButton(m_fourChannelButton);
+    modeGroup = new QButtonGroup(this);
+    modeGroup->setExclusive(true);
+    modeGroup->addButton(singleChannelButton);
+    modeGroup->addButton(fourChannelButton);
 
-    m_motionCheckBox = new QCheckBox(
-        QStringLiteral("移动侦测"), m_controlsWidget);
+    motionCheckBox = new QCheckBox(
+        QStringLiteral("移动侦测"), controlsWidget);
     monitorScreenshotButton = new QPushButton(
-        QStringLiteral("截图当前通道"), m_controlsWidget);
+        QStringLiteral("截图当前通道"), controlsWidget);
 
-    m_controlsLayout->addStretch();
-    m_controlsLayout->addWidget(m_singleChannelButton);
-    m_controlsLayout->addWidget(m_fourChannelButton);
-    m_controlsLayout->addWidget(m_motionCheckBox);
-    m_controlsLayout->addWidget(monitorScreenshotButton);
-    m_controlsLayout->addStretch();
+    controlsLayout->addStretch();
+    controlsLayout->addWidget(singleChannelButton);
+    controlsLayout->addWidget(fourChannelButton);
+    controlsLayout->addWidget(motionCheckBox);
+    controlsLayout->addWidget(monitorScreenshotButton);
+    controlsLayout->addStretch();
 
     // 预览 : 操作区 = 9 : 1
-    m_monitorRightLayout->addWidget(m_previewWidget, 9);
-    m_monitorRightLayout->addWidget(m_controlsWidget, 1);
+    monitorRightLayout->addWidget(previewWidget, 9);
+    monitorRightLayout->addWidget(controlsWidget, 1);
 }
 
 void MainWidget::initConnections()
 {
-    connect(m_pageStack, &QStackedLayout::currentChanged, this, &MainWidget::syncDetectionPreview);
-    connect(static_cast<ReviewWidget *>(m_pages[SnapshotPage]), &ReviewWidget::relatedVideoRequested,
+    // 统一连接页面导航、用户操作、截图及播放控制信号。
+    connect(pageStack, &QStackedLayout::currentChanged, this, &MainWidget::syncDetectionPreview);
+    connect(static_cast<ReviewWidget *>(pages[SnapshotPage]), &ReviewWidget::relatedVideoRequested,
             this, &MainWidget::openSnapshotVideo);
-    connect(static_cast<LogWidget *>(m_pages[LogPage]), &LogWidget::relatedVideoRequested,
+    connect(static_cast<LogWidget *>(pages[LogPage]), &LogWidget::relatedVideoRequested,
             this, &MainWidget::openSnapshotVideo);
     connect(monitorScreenshotButton, &QPushButton::clicked,
             this, &MainWidget::saveMonitorSnapshot);
-    connect(m_clockTimer, &QTimer::timeout,
+    connect(clockTimer, &QTimer::timeout,
             this, &MainWidget::updateTime);
 
     // 前四个导航按钮切换内部页面
     for (int i = 0; i < PageCount; ++i) {
-        connect(m_navigationButtons[i], &QPushButton::clicked,
+        connect(navigationButtons[i], &QPushButton::clicked,
                 this, [this, i]() {
-                    m_pageStack->setCurrentIndex(i);
+                    pageStack->setCurrentIndex(i);
                 });
     }
 
     // 最后一个导航按钮请求打开独立设置页面
-    connect(m_navigationButtons[NavigationCount - 1],
+    connect(navigationButtons[NavigationCount - 1],
             &QPushButton::clicked,
             this, &MainWidget::settingsRequested);
     connect(this,
@@ -333,29 +338,29 @@ void MainWidget::initConnections()
 
     // 通道选择
     for (int i = 0; i < ChannelCount; ++i) {
-        connect(m_channelButtons[i], &QPushButton::clicked,
+        connect(channelButtons[i], &QPushButton::clicked,
                 this, [this, i]() {
                     selectChannel(i);
                 });
     }
 
     // 预览模式切换
-    connect(m_singleChannelButton, &QPushButton::clicked,
+    connect(singleChannelButton, &QPushButton::clicked,
             this, [this]() {
                 setSingleChannelMode(true);
             });
 
-    connect(m_fourChannelButton, &QPushButton::clicked,
+    connect(fourChannelButton, &QPushButton::clicked,
             this, [this]() {
                 setSingleChannelMode(false);
             });
 
-    connect(m_motionCheckBox, &QCheckBox::toggled,
+    connect(motionCheckBox, &QCheckBox::toggled,
             this, &MainWidget::motionDetectionChanged);
-    connect(m_motionCheckBox, &QCheckBox::toggled,
+    connect(motionCheckBox, &QCheckBox::toggled,
             this, &MainWidget::syncDetectionPreview);
 
-    connect(m_loginButton,
+    connect(loginButton,
             &QPushButton::clicked,
             this,
             &MainWidget::handleLoginButtonClicked);
@@ -376,10 +381,11 @@ void MainWidget::initConnections()
 
 void MainWidget::saveMonitorSnapshot()
 {
+    // 将当前选中通道的实时画面保存为用户手动截图。
     if (monitorService == nullptr)
         return;
-    const int channelNo = m_currentChannel + 1;
-    const QImage image = monitorService->getChannelImage(m_currentChannel);
+    const int channelNo = currentChannel + 1;
+    const QImage image = monitorService->getChannelImage(currentChannel);
     const QDateTime frameTime = QDateTime::currentDateTime();
     if (image.isNull()) {
         logService.recordOperation(
@@ -432,6 +438,7 @@ void MainWidget::saveMonitorSnapshot()
 
 void MainWidget::handleLoginButtonClicked()
 {
+    // 根据当前登录状态执行登录页面切换或退出确认流程。
     if (!loggedIn) {
         WinManager::getInstance()
         ->loginWidget.show();
@@ -461,13 +468,15 @@ void MainWidget::handleLoginButtonClicked()
 
 void MainWidget::updateTime()
 {
-    m_timeLabel->setText(
+    // 刷新主页面显示的本地实时时间。
+    timeLabel->setText(
         QDateTime::currentDateTime().toString(
             QStringLiteral("yyyy-MM-dd HH:mm:ss")));
 }
 
 void MainWidget::openSettingsPage()
 {
+    // 打开当前用户的系统设置页面并加载其配置。
     if (!loggedIn) {
         return;
     }
@@ -479,6 +488,12 @@ void MainWidget::openSettingsPage()
         &SettingsWidget::settingsSaved,
         this,
         &MainWidget::updateRecordDirectory,
+        Qt::UniqueConnection);
+    connect(
+        &manager->settingsWidget,
+        &SettingsWidget::settingsSaved,
+        this,
+        &MainWidget::updateChannelNames,
         Qt::UniqueConnection);
 
     if (!manager->settingsWidget.openForUser(currentUsername)) {
@@ -493,21 +508,23 @@ void MainWidget::openSettingsPage()
 
 void MainWidget::setCurrentUser(const QString &username)
 {
+    // 更新登录用户显示、页面访问权限和用户关联服务。
     if (monitorService != nullptr && currentUsername != username.trimmed())
         monitorService->stopRecord();
     currentUsername = username.trimmed();
     loggedIn = !currentUsername.isEmpty();
+    updateChannelNames();
     snapshotService.setCurrentUser(currentUsername);
-    static_cast<ReviewWidget *>(m_pages[PlaybackPage])->setCurrentUser(currentUsername);
-    static_cast<ReviewWidget *>(m_pages[SnapshotPage])->setCurrentUser(currentUsername);
-    static_cast<LogWidget *>(m_pages[LogPage])->setCurrentUser(currentUsername);
+    static_cast<ReviewWidget *>(pages[PlaybackPage])->setCurrentUser(currentUsername);
+    static_cast<ReviewWidget *>(pages[SnapshotPage])->setCurrentUser(currentUsername);
+    static_cast<LogWidget *>(pages[LogPage])->setCurrentUser(currentUsername);
 
-    m_userLabel->setText(
+    userLabel->setText(
         loggedIn
             ? currentUsername
             : QStringLiteral("未登录"));
 
-    m_loginButton->setText(
+    loginButton->setText(
         loggedIn
             ? QStringLiteral("退出登录")
             : QStringLiteral("登录"));
@@ -521,40 +538,42 @@ void MainWidget::setCurrentUser(const QString &username)
             monitorService->stopRecord();
         if (storageMonitorService != nullptr)
             storageMonitorService->stop();
-        m_pageStack->setCurrentIndex(MonitorPage);
-        m_navigationButtons[MonitorPage]->setChecked(true);
+        pageStack->setCurrentIndex(MonitorPage);
+        navigationButtons[MonitorPage]->setChecked(true);
     }
 }
 
 void MainWidget::updateNavigationAccess()
 {
+    // 根据登录状态启用或禁用需要认证的页面入口。
     // 监控主页面始终允许访问。
-    m_navigationButtons[MonitorPage]->setEnabled(true);
+    navigationButtons[MonitorPage]->setEnabled(true);
 
     // 普通回看、移动侦测回看、日志查看需要登录。
     for (int pageIndex = PlaybackPage;
          pageIndex <= LogPage;
          ++pageIndex) {
-        m_navigationButtons[pageIndex]->setEnabled(loggedIn);
+        navigationButtons[pageIndex]->setEnabled(loggedIn);
     }
 
     // 系统设置按钮不在内容堆栈中，但同样需要登录。
-    m_navigationButtons[NavigationCount - 1]
+    navigationButtons[NavigationCount - 1]
         ->setEnabled(loggedIn);
 }
 
 void MainWidget::selectChannel(int channelIndex)
 {
+    // 切换当前预览通道并同步单路检测预览状态。
     if (channelIndex < 0 || channelIndex >= ChannelCount)
         return;
 
-    const bool changed = m_currentChannel != channelIndex;
+    const bool changed = currentChannel != channelIndex;
 
-    m_currentChannel = channelIndex;
-    m_channelButtons[channelIndex]->setChecked(true);
+    currentChannel = channelIndex;
+    channelButtons[channelIndex]->setChecked(true);
 
     // 单通道模式下，显示新选择的通道
-    if (m_singleChannelMode)
+    if (singleChannelMode)
         setSingleChannelMode(true);
 
     if (changed)
@@ -563,46 +582,49 @@ void MainWidget::selectChannel(int channelIndex)
 
 void MainWidget::setSingleChannelMode(bool enabled)
 {
-    m_singleChannelMode = enabled;
+    // 切换单画面/四画面布局并更新检测开关可用状态。
+    singleChannelMode = enabled;
 
     // 移除原有布局位置，保留预览控件
-    for (QLabel *label : m_previewLabels) {
-        m_previewLayout->removeWidget(label);
+    for (QLabel *label : previewLabels) {
+        previewLayout->removeWidget(label);
         label->hide();
     }
 
     if (enabled) {
         // 当前通道占满整个预览区
-        QLabel *label = m_previewLabels[m_currentChannel];
-        m_previewLayout->addWidget(label, 0, 0, 2, 2);
+        QLabel *label = previewLabels[currentChannel];
+        previewLayout->addWidget(label, 0, 0, 2, 2);
         label->show();
     } else {
         // 恢复四通道排列
         for (int i = 0; i < ChannelCount; ++i) {
-            m_previewLayout->addWidget(
-                m_previewLabels[i], i / 2, i % 2);
-            m_previewLabels[i]->show();
+            previewLayout->addWidget(
+                previewLabels[i], i / 2, i % 2);
+            previewLabels[i]->show();
         }
     }
 
-    m_singleChannelButton->setChecked(enabled);
-    m_fourChannelButton->setChecked(!enabled);
+    singleChannelButton->setChecked(enabled);
+    fourChannelButton->setChecked(!enabled);
 
     // 四通道模式必须取消勾选并禁用移动侦测
     if (!enabled)
-        m_motionCheckBox->setChecked(false);
+        motionCheckBox->setChecked(false);
 
-    m_motionCheckBox->setEnabled(enabled);
-    m_motionCheckBox->setToolTip(QStringLiteral("勾选后在当前单通道开启人体检测"));
+    motionCheckBox->setEnabled(enabled);
+    motionCheckBox->setToolTip(QStringLiteral("勾选后在当前单通道开启人体检测"));
     syncDetectionPreview();
 }
 MainWidget::~MainWidget()
 {
+    // 主页面销毁前停止监控线程和相关后台服务。
     stopMonitorService();
 }
 
 void MainWidget::initMonitorService()
 {
+    // 创建并启动监控采集、帧处理及存储空间监测服务。
     monitorService = new MonitorService(this);
     const QString videoDirectory = QCoreApplication::applicationDirPath()
         + QStringLiteral("/video");
@@ -615,33 +637,37 @@ void MainWidget::initMonitorService()
 
 void MainWidget::syncDetectionPreview()
 {
+    // 将当前画面模式和移动侦测复选框状态同步给监控服务。
     if (monitorService == nullptr)
         return;
     const bool previewActive = isVisible()
-        && m_pageStack->currentIndex() == MonitorPage
-        && m_singleChannelMode;
+        && pageStack->currentIndex() == MonitorPage
+        && singleChannelMode;
     const bool detectionEnabled =
-        m_singleChannelMode && m_motionCheckBox->isChecked();
+        singleChannelMode && motionCheckBox->isChecked();
     monitorService->setDetectionPreview(
-        previewActive, m_currentChannel, detectionEnabled);
+        previewActive, currentChannel, detectionEnabled);
 }
 
 void MainWidget::showEvent(QShowEvent *event)
 {
+    // 页面显示时恢复必要的预览状态和服务。
     QWidget::showEvent(event);
     syncDetectionPreview();
 }
 
 void MainWidget::hideEvent(QHideEvent *event)
 {
+    // 页面隐藏时暂停不应继续展示的监控资源。
     QWidget::hideEvent(event);
     if (monitorService != nullptr)
         monitorService->setDetectionPreview(
-            false, m_currentChannel, false);
+            false, currentChannel, false);
 }
 
 void MainWidget::updateRecordDirectory()
 {
+    // 从当前用户设置更新录像服务的输出目录。
     if (monitorService == nullptr
         || !loggedIn) {
         return;
@@ -679,19 +705,53 @@ void MainWidget::updateRecordDirectory()
         storageMonitorService->start(recordDirectory);
 }
 
+void MainWidget::updateChannelNames()
+{
+    // 按当前用户的配置更新通道按钮，缺失或空名称时使用通道编号。
+    SystemConfigData configuration;
+    for (int index = 0; index < ChannelCount; ++index) {
+        configuration.channels[index].channelName =
+            QStringLiteral("通道%1").arg(index + 1);
+    }
+
+    if (loggedIn) {
+        SystemConfigService configService;
+        QString errorMessage;
+        const SystemConfigService::Result result =
+            configService.load(currentUsername, configuration, errorMessage);
+
+        if (result != SystemConfigService::Result::Success) {
+            for (int index = 0; index < ChannelCount; ++index) {
+                configuration.channels[index].channelName =
+                    QStringLiteral("通道%1").arg(index + 1);
+            }
+        }
+    }
+
+    for (int index = 0; index < ChannelCount; ++index) {
+        QString channelName =
+            configuration.channels[index].channelName.trimmed();
+        if (channelName.isEmpty())
+            channelName = QStringLiteral("通道%1").arg(index + 1);
+        channelButtons[index]->setText(channelName);
+    }
+}
+
 void MainWidget::openSnapshotVideo(qulonglong recordId, qint64 offsetMs)
 {
+    // 从图片关联信息打开对应录像并定位到截图时间点。
     if (!loggedIn)
         return;
-    ReviewWidget *playbackPage = static_cast<ReviewWidget *>(m_pages[PlaybackPage]);
+    ReviewWidget *playbackPage = static_cast<ReviewWidget *>(pages[PlaybackPage]);
     if (!playbackPage->playRecord(recordId, offsetMs))
         return;
-    m_pageStack->setCurrentIndex(PlaybackPage);
-    m_navigationButtons[PlaybackPage]->setChecked(true);
+    pageStack->setCurrentIndex(PlaybackPage);
+    navigationButtons[PlaybackPage]->setChecked(true);
 }
 
 void MainWidget::stopMonitorService()
 {
+    // 关闭监控和存储监测服务，释放相关线程资源。
     if (previewTimer != nullptr) {
         previewTimer->stop();
     }
@@ -706,23 +766,24 @@ void MainWidget::stopMonitorService()
 
 void MainWidget::refreshMonitorFrames()
 {
+    // 刷新可见预览控件中的最新通道画面。
     if (monitorService == nullptr) {
         return;
     }
 
     // 这里只跳过绘制，不会停止采集和处理。
     if (!isVisible()
-        || m_pageStack->currentIndex() != MonitorPage) {
+        || pageStack->currentIndex() != MonitorPage) {
         return;
     }
 
     for (int index = 0; index < ChannelCount; index++) {
-        if (m_singleChannelMode
-            && index != m_currentChannel) {
+        if (singleChannelMode
+            && index != currentChannel) {
             continue;
         }
 
-        QLabel *previewLabel = m_previewLabels[index];
+        QLabel *previewLabel = previewLabels[index];
         QSize previewSize =
             previewLabel->contentsRect().size();
 
@@ -772,6 +833,7 @@ void MainWidget::refreshMonitorFrames()
 }
 void MainWidget::initQss()
 {
+    // 加载并应用主页面样式表。
     QFile file(QStringLiteral(":/styles/mainwidget.qss"));
 
     if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -783,6 +845,7 @@ void MainWidget::initQss()
 
 void MainWidget::initStorageMonitor(const QString &storagePath)
 {
+    // 初始化磁盘空间监测，并将告警反馈到界面。
     if (storageMonitorService == nullptr) {
         storageMonitorService = new StorageMonitorService(this);
 

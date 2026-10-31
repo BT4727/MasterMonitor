@@ -101,3 +101,5 @@ RESOURCES += \
 
 DISTFILES += bin \
     .gitignore
+
+TARGET = SmartMonitor

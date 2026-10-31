@@ -8,12 +8,14 @@
 
 OperationLogModel::OperationLogModel()
 {
+    // 为操作日志模型创建独立数据库连接名。
     connectionName = QStringLiteral("operationLog_%1")
         .arg(reinterpret_cast<quintptr>(this), 0, 16);
 }
 
 OperationLogModel::~OperationLogModel()
 {
+    // 关闭并移除操作日志模型持有的数据库连接。
     if (!database.isValid())
         return;
 
@@ -25,6 +27,7 @@ OperationLogModel::~OperationLogModel()
 
 bool OperationLogModel::openDatabase(QString &errorMessage)
 {
+    // 创建或打开操作日志模块专用数据库连接。
     if (!QSqlDatabase::contains(connectionName)) {
         database = QSqlDatabase::addDatabase(QStringLiteral("QMYSQL"), connectionName);
         DBConn::configureDatabase(database);
@@ -47,6 +50,7 @@ bool OperationLogModel::openDatabase(QString &errorMessage)
 
 bool OperationLogModel::ensureChannelColumn(QString &errorMessage)
 {
+    // 检查并补齐旧版操作日志表的通道字段。
     QSqlQuery checkQuery(database);
     if (!checkQuery.exec(QStringLiteral(
             "SHOW COLUMNS FROM operation_log LIKE 'channel_no'"))) {
@@ -76,6 +80,7 @@ bool OperationLogModel::ensureChannelColumn(QString &errorMessage)
 
 QVariant OperationLogModel::findUserId(const QString &username, QString &errorMessage)
 {
+    // 按用户名查询操作记录所需的用户编号。
     if (username.trimmed().isEmpty())
         return QVariant();
 
@@ -100,6 +105,7 @@ bool OperationLogModel::insertLog(const QString &username, int channelNo,
                                   qulonglong targetId, bool success,
                                   const QString &description, QString &errorMessage)
 {
+    // 插入操作日志，记录用户行为结果但不保存密码等凭据。
     errorMessage.clear();
 
     if (!openDatabase(errorMessage))
@@ -141,6 +147,7 @@ bool OperationLogModel::searchPage(const QDateTime &startTime, const QDateTime &
                                    QVector<OperationLogInfo> &logs, int &totalCount,
                                    QString &errorMessage)
 {
+    // 按时间和通道统计并分页读取操作日志，结果按时间倒序排列。
     logs.clear();
     totalCount = 0;
 
@@ -214,6 +221,7 @@ bool OperationLogModel::searchPage(const QDateTime &startTime, const QDateTime &
 
 bool OperationLogModel::deleteByIds(const QVector<qulonglong> &logIds, QString &errorMessage)
 {
+    // 按日志编号集合删除指定操作记录。
     if (logIds.isEmpty())
         return true;
 
@@ -241,6 +249,7 @@ bool OperationLogModel::deleteByIds(const QVector<qulonglong> &logIds, QString &
 
 bool OperationLogModel::deleteBefore(const QDateTime &time, QString &errorMessage)
 {
+    // 删除指定时间之前的操作日志记录。
     if (!openDatabase(errorMessage))
         return false;
 
@@ -261,6 +270,7 @@ bool OperationLogModel::deleteRange(const QDateTime &startTime,
                                     const QDateTime &endTime, int channelNo,
                                     QString &errorMessage)
 {
+    // 按时间区间及可选通道删除操作日志。
     if (!openDatabase(errorMessage))
         return false;
 

@@ -19,7 +19,6 @@ public:
         NotFound,
         DatabaseError
     };
-    AdminUserModel();
     QueryResult findByUsername(
         const QString &username,
         AdminUserRecord &record) const;

@@ -11,6 +11,7 @@
 
 void PersonTrackAxis::advance(double seconds)
 {
+    // 根据经过时间推进目标位置、速度及其估计误差。
     constexpr double accelerationNoise = 2500.0;
     const double secondsSquared = seconds * seconds;
     position += velocity * seconds;
@@ -24,6 +25,7 @@ void PersonTrackAxis::advance(double seconds)
 
 void PersonTrackAxis::correct(double measurement)
 {
+    // 使用本帧检测值校正预测状态，减小连续帧间的框抖动。
     const double innovation = measurement - position;
     const double denominator = p00 + 16.0;
     const double positionGain = p00 / denominator;
@@ -38,12 +40,14 @@ void PersonTrackAxis::correct(double measurement)
 
 void PersonTracker::clear()
 {
+    // 清除当前通道的全部轨迹状态。
     tracks.clear();
     stateTime = -1;
 }
 
 void PersonTracker::update(const QVector<cv::Rect> &boxes, qint64 frameTime)
 {
+    // 将本次检测框与已有轨迹匹配，并创建或更新目标轨迹。
     if (frameTime <= stateTime)
         return;
 
@@ -111,6 +115,7 @@ void PersonTracker::update(const QVector<cv::Rect> &boxes, qint64 frameTime)
         }
     }
 
+    // 按匹配代价从低到高贪心分配，避免一个检测框被多个轨迹重复使用。
     std::sort(candidates.begin(), candidates.end(),
               [](const TrackMatch &left, const TrackMatch &right) {
                   return left.cost < right.cost;
@@ -158,6 +163,7 @@ void PersonTracker::update(const QVector<cv::Rect> &boxes, qint64 frameTime)
 
 QVector<cv::Rect> PersonTracker::predict(qint64 frameTime, const cv::Size &frameSize) const
 {
+    // 将轨迹外推到当前显示时刻，并裁剪到图像边界内。
     QVector<cv::Rect> result;
     if (stateTime < 0 || frameSize.empty())
         return result;
@@ -201,6 +207,7 @@ QVector<cv::Rect> PersonTracker::predict(qint64 frameTime, const cv::Size &frame
 
 void PersonModel::load(const QString &modelPath)
 {
+    // 加载CPU版YOLO模型，并准备模型不可用时使用的HOG检测器。
     hog.setSVMDetector(cv::HOGDescriptor::getDefaultPeopleDetector());
     try {
         network = cv::dnn::readNetFromONNX(QFile::encodeName(modelPath).constData());
@@ -215,6 +222,7 @@ void PersonModel::load(const QString &modelPath)
 
 QVector<cv::Rect> PersonModel::detect(const cv::Mat &frame)
 {
+    // 优先执行YOLO推理，异常时切换到HOG检测。
     if (frame.empty())
         return QVector<cv::Rect>();
     if (yoloAvailable) {
@@ -335,7 +343,7 @@ QVector<cv::Rect> PersonModel::detectYolo(const cv::Mat &frame)
                 // COCO类别0为person。
                 const float personLogit = outputData[64 * gridArea + position];
                 const float personScore = 1.0f / (1.0f + std::exp(-personLogit));
-                if (!std::isfinite(personScore) || personScore < 0.25f)
+                if (!std::isfinite(personScore) || personScore < 0.6f)
                     continue;
 
                 const float leftDistance =
@@ -385,6 +393,7 @@ QVector<cv::Rect> PersonModel::detectYolo(const cv::Mat &frame)
 float PersonModel::decodeDistance(
     const float *outputData, int gridArea, int sideIndex, int position) const
 {
+    // 将YOLO分布式边界距离输出解码为连续距离值。
     float values[16];
     float maximumValue = -std::numeric_limits<float>::max();
 
@@ -410,6 +419,7 @@ float PersonModel::decodeDistance(
 
 QVector<cv::Rect> PersonModel::detectHog(const cv::Mat &frame)
 {
+    // 使用OpenCV内置HOG行人分类器提供备用检测结果。
     const double scale = qMin(1.0, 640.0 / frame.cols);
     cv::Mat input;
     cv::resize(frame, input, cv::Size(), scale, scale);
@@ -429,10 +439,12 @@ DetectionWorker::DetectionWorker(
     int workerIndex, const QString &modelPath, DetectionService *service)
     : QThread(service), workerIndex(workerIndex), modelPath(modelPath), service(service)
 {
+    // 保存工作线程编号、模型路径和共享检测服务。
 }
 
 void DetectionWorker::run()
 {
+    // 在线程内独立加载模型，循环获取分配到的帧并发布检测结果。
     try {
         PersonModel detector;
         detector.load(modelPath);
@@ -458,15 +470,18 @@ void DetectionWorker::run()
 DetectionService::DetectionService(QObject *parent)
     : QObject(parent)
 {
+    // 创建多通道检测服务并等待显式启动。
 }
 
 DetectionService::~DetectionService()
 {
+    // 对象销毁前停止并回收全部推理线程。
     stop();
 }
 
 void DetectionService::start(int channelCount, const QString &modelPath)
 {
+    // 按通道规模创建推理工作线程并初始化各通道状态。
     stop();
     channelCount = qBound(1, channelCount, 50);
     channels = QVector<PersonChannel>(channelCount);
@@ -486,6 +501,7 @@ void DetectionService::start(int channelCount, const QString &modelPath)
 
 void DetectionService::stop()
 {
+    // 通知工作线程退出并等待线程资源完全释放。
     {
         QMutexLocker<QMutex> locker(&stateMutex);
         running = false;
@@ -503,6 +519,7 @@ void DetectionService::stop()
 
 void DetectionService::clearChannel(int channelIndex)
 {
+    // 作废该通道尚未返回的推理结果并重置跟踪状态。
     PersonChannel &channel = channels[channelIndex];
     ++channel.revision;
     channel.pendingFrame.release();
@@ -516,6 +533,7 @@ void DetectionService::clearChannel(int channelIndex)
 void DetectionService::setPreview(
     bool enabled, int channelIndex, bool detectionEnabled)
 {
+    // 更新单路/多路预览状态，并清理当前不应继续显示的检测结果。
     QMutexLocker<QMutex> locker(&stateMutex);
     if (singleChannel == enabled
         && selectedChannel == channelIndex
@@ -533,6 +551,7 @@ void DetectionService::setPreview(
 
 bool DetectionService::canTrigger(int channelIndex)
 {
+    // 判断该通道当前是否满足触发移动目标录像的预览条件。
     QMutexLocker<QMutex> locker(&stateMutex);
     return running && singleChannel && detectionEnabled
         && selectedChannel == channelIndex;
@@ -540,12 +559,14 @@ bool DetectionService::canTrigger(int channelIndex)
 
 bool DetectionService::isMotionDetectionEnabled()
 {
+    // 返回移动侦测开关当前是否处于启用状态。
     QMutexLocker<QMutex> locker(&stateMutex);
     return running && detectionEnabled;
 }
 
 void DetectionService::setMotionActive(int channelIndex, bool active)
 {
+    // 记录通道移动录像状态，避免录像期间清除其检测轨迹。
     QMutexLocker<QMutex> locker(&stateMutex);
     if (channelIndex < 0 || channelIndex >= channels.size())
         return;
@@ -556,6 +577,7 @@ void DetectionService::setMotionActive(int channelIndex, bool active)
 
 void DetectionService::resetRecordingState()
 {
+    // 重置检测服务中与录像触发关联的状态。
     QMutexLocker<QMutex> locker(&stateMutex);
     for (int index = 0; index < channels.size(); ++index) {
         channels[index].motionActive = false;
@@ -566,6 +588,7 @@ void DetectionService::resetRecordingState()
 void DetectionService::prepareFrame(
     int channelIndex, cv::Mat &frame, int &personState, bool &allowTrigger)
 {
+    // 为采集帧登记检测任务，并返回可用于录像触发的最新目标状态。
     personState = -1;
     allowTrigger = false;
     QMutexLocker<QMutex> locker(&stateMutex);
@@ -599,6 +622,7 @@ void DetectionService::prepareFrame(
 bool DetectionService::takeFrame(
     int workerIndex, int &channelIndex, cv::Mat &frame, qint64 &frameTime, qint64 &revision)
 {
+    // 从线程负载队列中取出一个待推理帧；停止时返回 false。
     QMutexLocker<QMutex> locker(&stateMutex);
     while (running) {
         const int count = static_cast<int>(channels.size());
@@ -624,6 +648,7 @@ bool DetectionService::takeFrame(
 void DetectionService::publishResult(
     int channelIndex, const QVector<cv::Rect> &boxes, qint64 frameTime, qint64 revision)
 {
+    // 接收推理结果并更新通道跟踪器，仅接受仍有效的帧版本。
     QMutexLocker<QMutex> locker(&stateMutex);
     if (!running || channelIndex < 0 || channelIndex >= channels.size())
         return;

@@ -9,7 +9,6 @@
 class PlaybackService
 {
 public:
-    PlaybackService();
     void setCurrentUser(const QString &username);
     bool findRecordById(qulonglong recordId, VideoRecordInfo &record, QString &errorMessage);
     bool searchPage(const QDateTime &startTime, const QDateTime &endTime, int channelNo,

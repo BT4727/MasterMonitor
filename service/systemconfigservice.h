@@ -5,7 +5,6 @@
 class SystemConfigService
 {
 public:
-    SystemConfigService();
     enum class Result {
         Success,
         NoConfig,

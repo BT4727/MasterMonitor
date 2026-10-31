@@ -8,10 +8,9 @@
 #include <QSqlError>
 #include <QSqlQuery>
 
-AdminUserModel::AdminUserModel() {}
-
 AdminUserModel::QueryResult AdminUserModel::findByUsername(const QString &username, AdminUserRecord &record) const
 {
+    // 查询账户凭据、启用状态和登录失败锁定信息。
     record = AdminUserRecord();
 
     DBConn *connection = DBConn::getInstance();
@@ -76,6 +75,7 @@ bool AdminUserModel::updateLoginFailure(
     int errorTimes,
     const QDateTime &lockedUntil) const
 {
+    // 更新账户连续登录失败次数及可选锁定截止时间。
     DBConn *connection = DBConn::getInstance();
     QSqlDatabase database = connection->getDb();
 
@@ -129,6 +129,7 @@ bool AdminUserModel::updateLoginFailure(
 bool AdminUserModel::clearLoginFailures(
     const QString &username) const
 {
+    // 登录成功或锁定到期后清除账户失败次数和锁定时间。
     DBConn *connection = DBConn::getInstance();
     QSqlDatabase database = connection->getDb();
 

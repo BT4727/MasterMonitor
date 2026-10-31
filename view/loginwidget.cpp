@@ -12,141 +12,142 @@
 LoginWidget::LoginWidget(QWidget *parent)
     : QWidget{parent}
 {
+    // 创建登录表单、验证码和密码显隐控件。
     setWindowTitle(QStringLiteral("智能监控系统登录界面"));
     resize(1000, 650);
     setMinimumSize(800, 550);
 
     // 背景图资源准备好后，从 Qt 资源系统加载
-    m_backgroundImage.load(
+    backgroundImage.load(
         QStringLiteral(":/images/login_background.png"));
 
-    m_mainLayout = new QVBoxLayout(this);
-    m_mainLayout->setContentsMargins(48, 32, 48, 32);
-    m_mainLayout->setSpacing(0);
+    mainLayout = new QVBoxLayout(this);
+    mainLayout->setContentsMargins(48, 32, 48, 32);
+    mainLayout->setSpacing(0);
 
-    m_mainLayout->addStretch(1);
+    mainLayout->addStretch(1);
 
-    m_titleLabel = new QLabel(
+    titleLabel = new QLabel(
         QStringLiteral("智能监控系统登录界面"), this);
-    m_titleLabel->setObjectName(QStringLiteral("loginTitle"));
-    m_titleLabel->setAlignment(Qt::AlignCenter);
-    m_mainLayout->addWidget(m_titleLabel, 0, Qt::AlignHCenter);
+    titleLabel->setObjectName(QStringLiteral("loginTitle"));
+    titleLabel->setAlignment(Qt::AlignCenter);
+    mainLayout->addWidget(titleLabel, 0, Qt::AlignHCenter);
 
-    m_mainLayout->addSpacing(28);
+    mainLayout->addSpacing(28);
 
     // 表单区域
-    m_formPanel = new QFrame(this);
-    m_formPanel->setMaximumWidth(560);
-    m_formPanel->setObjectName(QStringLiteral("loginFormPanel"));
+    formPanel = new QFrame(this);
+    formPanel->setMaximumWidth(560);
+    formPanel->setObjectName(QStringLiteral("loginFormPanel"));
 
-    m_formLayout = new QVBoxLayout(m_formPanel);
-    m_formLayout->setContentsMargins(28, 24, 28, 24);
-    m_formLayout->setSpacing(20);
+    formLayout = new QVBoxLayout(formPanel);
+    formLayout->setContentsMargins(28, 24, 28, 24);
+    formLayout->setSpacing(20);
 
-    m_fieldsLayout = new QFormLayout;
-    m_fieldsLayout->setHorizontalSpacing(16);
-    m_fieldsLayout->setVerticalSpacing(18);
+    fieldsLayout = new QFormLayout;
+    fieldsLayout->setHorizontalSpacing(16);
+    fieldsLayout->setVerticalSpacing(18);
 
-    m_usernameEdit = new QLineEdit(m_formPanel);
-    m_usernameEdit->setPlaceholderText(
+    usernameEdit = new QLineEdit(formPanel);
+    usernameEdit->setPlaceholderText(
         QStringLiteral("请输入用户名"));
-    m_usernameEdit->setMinimumWidth(300);
+    usernameEdit->setMinimumWidth(300);
 
-    m_passwordEdit = new QLineEdit(m_formPanel);
-    m_passwordEdit->setPlaceholderText(
+    passwordEdit = new QLineEdit(formPanel);
+    passwordEdit->setPlaceholderText(
         QStringLiteral("请输入密码"));
-    m_passwordEdit->setEchoMode(QLineEdit::Password);
+    passwordEdit->setEchoMode(QLineEdit::Password);
 
-    m_passwordToggleButton = new QPushButton(m_formPanel);
-    m_passwordToggleButton->setObjectName(
+    passwordToggleButton = new QPushButton(formPanel);
+    passwordToggleButton->setObjectName(
         QStringLiteral("passwordToggleButton"));
-    m_passwordToggleButton->setIcon(
+    passwordToggleButton->setIcon(
         QIcon(QStringLiteral(":/images/eye.png")));
-    m_passwordToggleButton->setIconSize(QSize(22, 22));
-    m_passwordToggleButton->setCheckable(true);
-    m_passwordToggleButton->setToolTip(QStringLiteral("显示密码"));
-    m_passwordToggleButton->setAccessibleName(
+    passwordToggleButton->setIconSize(QSize(22, 22));
+    passwordToggleButton->setCheckable(true);
+    passwordToggleButton->setToolTip(QStringLiteral("显示密码"));
+    passwordToggleButton->setAccessibleName(
         QStringLiteral("显示密码"));
 
-    m_passwordLayout = new QHBoxLayout;
-    m_passwordLayout->setContentsMargins(0, 0, 0, 0);
-    m_passwordLayout->setSpacing(8);
-    m_passwordLayout->addWidget(m_passwordEdit, 1);
-    m_passwordLayout->addWidget(m_passwordToggleButton);
+    passwordLayout = new QHBoxLayout;
+    passwordLayout->setContentsMargins(0, 0, 0, 0);
+    passwordLayout->setSpacing(8);
+    passwordLayout->addWidget(passwordEdit, 1);
+    passwordLayout->addWidget(passwordToggleButton);
 
-    m_usernameErrorLabel = new QLabel(
+    usernameErrorLabel = new QLabel(
         QStringLiteral("输入格式错误：用户名须为6-10位字母或数字"),
-        m_formPanel);
+        formPanel);
 
-    m_usernameErrorLabel->setObjectName(
+    usernameErrorLabel->setObjectName(
         QStringLiteral("loginInputError"));
-    m_usernameErrorLabel->hide();
+    usernameErrorLabel->hide();
 
-    m_usernameFieldLayout = new QVBoxLayout;
-    m_usernameFieldLayout->setContentsMargins(0, 0, 0, 0);
-    m_usernameFieldLayout->setSpacing(4);
-    m_usernameFieldLayout->addWidget(m_usernameEdit);
-    m_usernameFieldLayout->addWidget(m_usernameErrorLabel);
+    usernameFieldLayout = new QVBoxLayout;
+    usernameFieldLayout->setContentsMargins(0, 0, 0, 0);
+    usernameFieldLayout->setSpacing(4);
+    usernameFieldLayout->addWidget(usernameEdit);
+    usernameFieldLayout->addWidget(usernameErrorLabel);
 
-    m_passwordErrorLabel = new QLabel(
+    passwordErrorLabel = new QLabel(
         QStringLiteral("输入格式错误：密码须为6-8位字母或数字"),
-        m_formPanel);
+        formPanel);
 
-    m_passwordErrorLabel->setObjectName(
+    passwordErrorLabel->setObjectName(
         QStringLiteral("loginInputError"));
-    m_passwordErrorLabel->hide();
+    passwordErrorLabel->hide();
 
-    m_passwordFieldLayout = new QVBoxLayout;
-    m_passwordFieldLayout->setContentsMargins(0, 0, 0, 0);
-    m_passwordFieldLayout->setSpacing(4);
-    m_passwordFieldLayout->addLayout(m_passwordLayout);
-    m_passwordFieldLayout->addWidget(m_passwordErrorLabel);
+    passwordFieldLayout = new QVBoxLayout;
+    passwordFieldLayout->setContentsMargins(0, 0, 0, 0);
+    passwordFieldLayout->setSpacing(4);
+    passwordFieldLayout->addLayout(passwordLayout);
+    passwordFieldLayout->addWidget(passwordErrorLabel);
 
-    m_captchaEdit = new QLineEdit(m_formPanel);
-    m_captchaEdit->setPlaceholderText(
+    captchaEdit = new QLineEdit(formPanel);
+    captchaEdit->setPlaceholderText(
         QStringLiteral("请输入验证码"));
-    m_captchaEdit->setMaxLength(4);
+    captchaEdit->setMaxLength(4);
 
     // 现有 IdentifyingLabel 支持点击刷新验证码
-    m_captchaLabel = new IdentifyingLabel(m_formPanel);
+    captchaLabel = new IdentifyingLabel(formPanel);
 
     QHBoxLayout *captchaRowLayout = new QHBoxLayout;
     captchaRowLayout->setSpacing(12);
-    captchaRowLayout->addWidget(m_captchaEdit, 1);
-    captchaRowLayout->addWidget(m_captchaLabel);
+    captchaRowLayout->addWidget(captchaEdit, 1);
+    captchaRowLayout->addWidget(captchaLabel);
 
-    m_fieldsLayout->addRow(
-        QStringLiteral("用户名"), m_usernameFieldLayout);
+    fieldsLayout->addRow(
+        QStringLiteral("用户名"), usernameFieldLayout);
 
-    m_fieldsLayout->addRow(
-        QStringLiteral("密码"), m_passwordFieldLayout);
-    m_fieldsLayout->addRow(
+    fieldsLayout->addRow(
+        QStringLiteral("密码"), passwordFieldLayout);
+    fieldsLayout->addRow(
         QStringLiteral("验证码"), captchaRowLayout);
 
-    m_formLayout->addLayout(m_fieldsLayout);
+    formLayout->addLayout(fieldsLayout);
 
     // 登录和取消按钮
-    m_buttonLayout = new QHBoxLayout;
-    m_buttonLayout->setSpacing(20);
-    m_buttonLayout->addStretch();
+    buttonLayout = new QHBoxLayout;
+    buttonLayout->setSpacing(20);
+    buttonLayout->addStretch();
 
-    m_loginButton = new QPushButton(
-        QStringLiteral("登录"), m_formPanel);
-    m_loginButton->setObjectName(QStringLiteral("loginButton"));
-    m_cancelButton = new QPushButton(
-        QStringLiteral("取消"), m_formPanel);
+    loginButton = new QPushButton(
+        QStringLiteral("登录"), formPanel);
+    loginButton->setObjectName(QStringLiteral("loginButton"));
+    cancelButton = new QPushButton(
+        QStringLiteral("取消"), formPanel);
 
-    m_loginButton->setMinimumWidth(110);
-    m_cancelButton->setMinimumWidth(110);
+    loginButton->setMinimumWidth(110);
+    cancelButton->setMinimumWidth(110);
 
-    m_buttonLayout->addWidget(m_loginButton);
-    m_buttonLayout->addWidget(m_cancelButton);
-    m_buttonLayout->addStretch();
+    buttonLayout->addWidget(loginButton);
+    buttonLayout->addWidget(cancelButton);
+    buttonLayout->addStretch();
 
-    m_formLayout->addLayout(m_buttonLayout);
+    formLayout->addLayout(buttonLayout);
 
-    m_mainLayout->addWidget(m_formPanel, 0, Qt::AlignHCenter);
-    m_mainLayout->addStretch(1);
+    mainLayout->addWidget(formPanel, 0, Qt::AlignHCenter);
+    mainLayout->addStretch(1);
 
     initConnect();
     initQss();
@@ -155,14 +156,16 @@ LoginWidget::LoginWidget(QWidget *parent)
 
 void LoginWidget::resizeEvent(QResizeEvent *event)
 {
+    // 窗口尺寸变化时同步缩放背景图。
     QWidget::resizeEvent(event);
 
-    if (!m_backgroundImage.isNull())
+    if (!backgroundImage.isNull())
         updateBackground();
 }
 
 void LoginWidget::initQss()
 {
+    // 从Qt资源中加载登录页面样式。
     QFile file(QStringLiteral(":/styles/loginwidget.qss"));
 
     if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -175,46 +178,48 @@ void LoginWidget::initQss()
 
 void LoginWidget::initConnect()
 {
-    connect(m_usernameEdit, &QLineEdit::editingFinished,
+    // 连接输入校验、登录取消及密码显隐交互。
+    connect(usernameEdit, &QLineEdit::editingFinished,
             this, [this]() {
                 validateUsername();
             });
 
-    connect(m_passwordEdit, &QLineEdit::editingFinished,
+    connect(passwordEdit, &QLineEdit::editingFinished,
             this, [this]() {
                 validatePassword();
             });
 
-    connect(m_loginButton, &QPushButton::clicked,
+    connect(loginButton, &QPushButton::clicked,
             this, &LoginWidget::onLoginClicked);
 
-    connect(m_cancelButton, &QPushButton::clicked,
+    connect(cancelButton, &QPushButton::clicked,
             this, [this]() {
                 WinManager::getInstance()->mainWidget.show();
                 this->hide();
     });
 
-    connect(m_passwordToggleButton, &QPushButton::toggled,
+    connect(passwordToggleButton, &QPushButton::toggled,
             this, [this](bool visible) {
-                m_passwordEdit->setEchoMode(
+                passwordEdit->setEchoMode(
                     visible ? QLineEdit::Normal : QLineEdit::Password);
 
                 const QString description = visible
                                                 ? QStringLiteral("隐藏密码")
                                                 : QStringLiteral("显示密码");
 
-                m_passwordToggleButton->setToolTip(description);
-                m_passwordToggleButton->setAccessibleName(description);
+                passwordToggleButton->setToolTip(description);
+                passwordToggleButton->setAccessibleName(description);
     });
 }
 
 void LoginWidget::updateBackground()
 {
+    // 将背景图片按窗口尺寸缩放后应用到窗口调色板。
     QPalette backgroundPalette = palette();
 
     backgroundPalette.setBrush(
         QPalette::Window,
-        QBrush(m_backgroundImage.scaled(
+        QBrush(backgroundImage.scaled(
             size(),
             Qt::IgnoreAspectRatio,
             Qt::SmoothTransformation)));
@@ -224,13 +229,14 @@ void LoginWidget::updateBackground()
 
 bool LoginWidget::validateUsername()
 {
+    // 检查用户名非空且符合6至10位字母数字规则。
     const QString username =
-        m_usernameEdit->text().trimmed();
+        usernameEdit->text().trimmed();
 
     if (username.isEmpty()) {
-        m_usernameErrorLabel->setText(
+        usernameErrorLabel->setText(
             QStringLiteral("用户名不能为空"));
-        m_usernameErrorLabel->show();
+        usernameErrorLabel->show();
         return false;
     }
 
@@ -241,12 +247,12 @@ bool LoginWidget::validateUsername()
         usernamePattern.match(username).hasMatch();
 
     if (!valid) {
-        m_usernameErrorLabel->setText(
+        usernameErrorLabel->setText(
             QStringLiteral(
                 "输入格式错误：用户名须为6-10位字母或数字"));
-        m_usernameErrorLabel->show();
+        usernameErrorLabel->show();
     } else {
-        m_usernameErrorLabel->hide();
+        usernameErrorLabel->hide();
     }
 
     return valid;
@@ -254,13 +260,14 @@ bool LoginWidget::validateUsername()
 
 bool LoginWidget::validatePassword()
 {
+    // 检查密码非空且符合6至8位字母数字规则。
     const QString password =
-        m_passwordEdit->text();
+        passwordEdit->text();
 
     if (password.trimmed().isEmpty()) {
-        m_passwordErrorLabel->setText(
+        passwordErrorLabel->setText(
             QStringLiteral("密码不能为空"));
-        m_passwordErrorLabel->show();
+        passwordErrorLabel->show();
         return false;
     }
 
@@ -271,12 +278,12 @@ bool LoginWidget::validatePassword()
         passwordPattern.match(password).hasMatch();
 
     if (!valid) {
-        m_passwordErrorLabel->setText(
+        passwordErrorLabel->setText(
             QStringLiteral(
                 "输入格式错误：密码须为6-8位字母或数字"));
-        m_passwordErrorLabel->show();
+        passwordErrorLabel->show();
     } else {
-        m_passwordErrorLabel->hide();
+        passwordErrorLabel->hide();
     }
 
     return valid;
@@ -284,26 +291,28 @@ bool LoginWidget::validatePassword()
 
 void LoginWidget::clearAllInputs()
 {
-    m_usernameEdit->clear();
-    m_passwordEdit->clear();
-    m_captchaEdit->clear();
+    // 清空登录表单并恢复密码默认隐藏状态。
+    usernameEdit->clear();
+    passwordEdit->clear();
+    captchaEdit->clear();
 
-    m_usernameErrorLabel->hide();
-    m_passwordErrorLabel->hide();
+    usernameErrorLabel->hide();
+    passwordErrorLabel->hide();
 
     // 清空后恢复密文输入状态。
-    m_passwordToggleButton->setChecked(false);
+    passwordToggleButton->setChecked(false);
 }
 
 void LoginWidget::onLoginClicked()
 {
-    const QString attemptedUsername = m_usernameEdit->text().trimmed();
+    // 依次验证验证码、输入格式和账户凭据，并处理登录结果。
+    const QString attemptedUsername = usernameEdit->text().trimmed();
 
     // 验证码始终优先校验。
     const bool captchaCorrect =
         QString::compare(
-            m_captchaEdit->text().trimmed(),
-            m_captchaLabel->getCode(),
+            captchaEdit->text().trimmed(),
+            captchaLabel->getCode(),
             Qt::CaseInsensitive) == 0;
 
     if (!captchaCorrect) {
@@ -319,9 +328,9 @@ void LoginWidget::onLoginClicked()
             QStringLiteral("登录失败"),
             QStringLiteral("验证码错误"));
 
-        m_captchaEdit->clear();
-        m_captchaLabel->regenerate();
-        m_captchaEdit->setFocus();
+        captchaEdit->clear();
+        captchaLabel->regenerate();
+        captchaEdit->setFocus();
         return;
     }
 
@@ -339,12 +348,13 @@ void LoginWidget::onLoginClicked()
     }
 
     const QString username =
-        m_usernameEdit->text().trimmed();
+        usernameEdit->text().trimmed();
 
+    // 认证服务接收明文仅用于本次校验，任何日志描述均不包含密码。
     const AdminUserService::LoginResult loginResult =
-        m_adminUserService.login(
+        adminUserService.login(
             username,
-            m_passwordEdit->text());
+            passwordEdit->text());
 
     if (loginResult ==
         AdminUserService::LoginResult::DatabaseError) {
@@ -372,8 +382,8 @@ void LoginWidget::onLoginClicked()
                 "当前账号已锁定，请30秒后再尝试登录"));
 
         clearAllInputs();
-        m_captchaLabel->regenerate();
-        m_usernameEdit->setFocus();
+        captchaLabel->regenerate();
+        usernameEdit->setFocus();
         return;
     }
 
@@ -389,8 +399,8 @@ void LoginWidget::onLoginClicked()
             QStringLiteral("用户名或密码错误"));
 
         clearAllInputs();
-        m_captchaLabel->regenerate();
-        m_usernameEdit->setFocus();
+        captchaLabel->regenerate();
+        usernameEdit->setFocus();
         return;
     }
 
@@ -403,7 +413,7 @@ void LoginWidget::onLoginClicked()
     manager->mainWidget.setCurrentUser(username);
 
     clearAllInputs();
-    m_captchaLabel->regenerate();
+    captchaLabel->regenerate();
 
     manager->mainWidget.show();
     hide();

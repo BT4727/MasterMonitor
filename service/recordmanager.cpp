@@ -4,6 +4,7 @@
 RecordManager::RecordManager(QObject *parent)
     : QObject(parent)
 {
+    // 初始化录像线程池状态和任务指针。
     running = false;
     captureThreadCount = 0;
     recordThreadCount = 0;
@@ -18,11 +19,13 @@ RecordManager::RecordManager(QObject *parent)
 
 RecordManager::~RecordManager()
 {
+    // 管理器销毁前停止全部录像线程。
     stopRecord();
 }
 
 void RecordManager::setDetectionService(DetectionService *service)
 {
+    // 将检测服务传递给后续创建的录像任务。
     detectionService = service;
 }
 
@@ -30,6 +33,7 @@ void RecordManager::startRecord(
     int captureCount,
     const QString &outputDirectory, const QString &username)
 {
+    // 根据采集通道数创建录像线程池并启动各录像任务。
     if (running
         || captureCount <= 0
         || captureCount > MaxCaptureThreadCount) {
@@ -72,6 +76,7 @@ void RecordManager::startRecord(
 
 void RecordManager::initConnect(int threadIndex)
 {
+    // 连接录像目录变更和录像线程退出后的任务清理信号。
     connect(
         this,
         &RecordManager::outputDirectoryChanged,
@@ -90,6 +95,7 @@ void RecordManager::connectCaptureTask(
     int channelIndex,
     MonitorTask *captureTask)
 {
+    // 将指定采集通道的帧分配给对应录像线程。
     if (!running
         || captureTask == nullptr
         || channelIndex < 0
@@ -111,6 +117,7 @@ void RecordManager::connectCaptureTask(
 void RecordManager::setOutputDirectory(
     const QString &directory)
 {
+    // 向运行中的录像任务异步广播输出目录变更。
     if (!running) {
         return;
     }
@@ -120,6 +127,7 @@ void RecordManager::setOutputDirectory(
 
 void RecordManager::stopRecord()
 {
+    // 先排空并收尾录像任务，再依次停止和回收录像线程。
     if (!running) {
         return;
     }
@@ -152,6 +160,7 @@ void RecordManager::stopRecord()
 int RecordManager::getRecordThreadIndex(
     int channelIndex) const
 {
+    // 以轮询方式将通道均匀分配到录像线程。
     // 轮询分配，录制任务数量会随采集通道数扩展。
     return channelIndex % recordThreadCount;
 }

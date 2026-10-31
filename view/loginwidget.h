@@ -33,33 +33,33 @@ private:
     bool validatePassword();
     void clearAllInputs();
 
-    QPixmap m_backgroundImage;
+    QPixmap backgroundImage;
 
-    AdminUserService m_adminUserService;
+    AdminUserService adminUserService;
     LogService logService;
 
-    QVBoxLayout *m_usernameFieldLayout = nullptr;
-    QVBoxLayout *m_passwordFieldLayout = nullptr;
-    QLabel *m_usernameErrorLabel = nullptr;
-    QLabel *m_passwordErrorLabel = nullptr;
+    QVBoxLayout *usernameFieldLayout = nullptr;
+    QVBoxLayout *passwordFieldLayout = nullptr;
+    QLabel *usernameErrorLabel = nullptr;
+    QLabel *passwordErrorLabel = nullptr;
 
-    QVBoxLayout *m_mainLayout = nullptr;
-    QLabel *m_titleLabel = nullptr;
+    QVBoxLayout *mainLayout = nullptr;
+    QLabel *titleLabel = nullptr;
 
-    QFrame *m_formPanel = nullptr;
-    QVBoxLayout *m_formLayout = nullptr;
-    QFormLayout *m_fieldsLayout = nullptr;
+    QFrame *formPanel = nullptr;
+    QVBoxLayout *formLayout = nullptr;
+    QFormLayout *fieldsLayout = nullptr;
 
-    QLineEdit *m_usernameEdit = nullptr;
-    QLineEdit *m_passwordEdit = nullptr;
-    QLineEdit *m_captchaEdit = nullptr;
-    IdentifyingLabel *m_captchaLabel = nullptr;
-    QHBoxLayout *m_passwordLayout = nullptr;
-    QPushButton *m_passwordToggleButton = nullptr;
+    QLineEdit *usernameEdit = nullptr;
+    QLineEdit *passwordEdit = nullptr;
+    QLineEdit *captchaEdit = nullptr;
+    IdentifyingLabel *captchaLabel = nullptr;
+    QHBoxLayout *passwordLayout = nullptr;
+    QPushButton *passwordToggleButton = nullptr;
 
-    QHBoxLayout *m_buttonLayout = nullptr;
-    QPushButton *m_loginButton = nullptr;
-    QPushButton *m_cancelButton = nullptr;
+    QHBoxLayout *buttonLayout = nullptr;
+    QPushButton *loginButton = nullptr;
+    QPushButton *cancelButton = nullptr;
 
 public slots:
     void onLoginClicked();

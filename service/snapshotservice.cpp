@@ -8,6 +8,7 @@
 
 void SnapshotService::setCurrentUser(const QString &username)
 {
+    // 将图片数据操作绑定到当前登录用户。
     snapshotModel.setCurrentUser(username);
 }
 
@@ -16,6 +17,7 @@ bool SnapshotService::saveManualSnapshot(
     const QDateTime &frameTime, qulonglong videoId, qint64 offsetMs,
     SnapshotInfo &snapshot, QString &errorMessage)
 {
+    // 校验手动截图参数，先安全写入图片，再创建数据库记录。
     errorMessage.clear();
     snapshot = SnapshotInfo();
     if (image.isNull()) {
@@ -88,6 +90,7 @@ bool SnapshotService::saveEventSnapshot(
     const QDateTime &frameTime, qint64 offsetMs, int sequence,
     const QString &directory, QString &errorMessage)
 {
+    // 保存移动事件截图，并关联异常事件、通道和录像时间点。
     errorMessage.clear();
     if (image.isNull() || eventId == 0 || videoId == 0 || offsetMs < 0
         || sequence < 1 || sequence > 3) {
@@ -135,6 +138,7 @@ bool SnapshotService::searchSnapshots(
     const QDateTime &startTime, const QDateTime &endTime, int channelNo,
     QVector<SnapshotInfo> &snapshots, QString &errorMessage)
 {
+    // 按时间和通道查询图片，并补齐可跳转的关联录像信息。
     errorMessage.clear();
     if (!startTime.isValid() || !endTime.isValid() || endTime <= startTime) {
         errorMessage = QStringLiteral("图片查询时间范围无效");
@@ -153,6 +157,7 @@ bool SnapshotService::searchSnapshots(
 
 bool SnapshotService::deleteSnapshot(const SnapshotInfo &snapshot, QString &errorMessage)
 {
+    // 暂存图片后删除数据库记录，失败时恢复文件以保持数据一致。
     errorMessage.clear();
     const bool fileExists = QFileInfo::exists(snapshot.snapshotPath);
     QString temporaryPath;
@@ -184,6 +189,7 @@ bool SnapshotService::exportSnapshots(
     const QVector<SnapshotInfo> &snapshots, const QString &targetDirectory,
     QString &errorMessage)
 {
+    // 将选中的图片批量复制到目标目录，并为重名文件生成新名称。
     errorMessage.clear();
     if (snapshots.isEmpty()) {
         errorMessage = QStringLiteral("请先选择需要导出的图片");

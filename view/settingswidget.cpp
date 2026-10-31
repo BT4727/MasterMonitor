@@ -13,6 +13,7 @@
 SettingsWidget::SettingsWidget(QWidget *parent)
     : QWidget{parent}
 {
+    // 创建系统配置表单并加载默认显示内容。
     setWindowTitle(QStringLiteral("智能监控系统设置页"));
     resize(900, 650);
     setMinimumSize(700, 720);
@@ -46,6 +47,7 @@ SettingsWidget::SettingsWidget(QWidget *parent)
 
 bool SettingsWidget::openForUser(const QString &username)
 {
+    // 打开设置时读取用户配置并刷新本机摄像头名称。
     const QString normalizedUsername = username.trimmed();
 
     if (normalizedUsername.isEmpty()) {
@@ -82,6 +84,7 @@ bool SettingsWidget::openForUser(const QString &username)
 
 void SettingsWidget::initForm()
 {
+    // 创建保存路径、切片长度和通道配置表单。
     formWidget = new QWidget(this);
     formLayout = new QVBoxLayout(formWidget);
     formLayout->setContentsMargins(0, 0, 0, 0);
@@ -184,6 +187,7 @@ void SettingsWidget::initForm()
 
 void SettingsWidget::initButtons()
 {
+    // 创建保存和取消操作按钮。
     buttonLayout = new QHBoxLayout;
     buttonLayout->setContentsMargins(0, 0, 0, 0);
     buttonLayout->setSpacing(24);
@@ -204,6 +208,7 @@ void SettingsWidget::initButtons()
 
 void SettingsWidget::initConnect()
 {
+    // 连接浏览目录、保存配置和取消操作。
     connect(browseButton,
             &QPushButton::clicked,
             this,
@@ -222,6 +227,7 @@ void SettingsWidget::initConnect()
 
 void SettingsWidget::initQss()
 {
+    // 从Qt资源加载系统设置页面样式。
     QFile file(QStringLiteral(":/styles/settingswidget.qss"));
 
     if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -234,6 +240,7 @@ void SettingsWidget::initQss()
 
 void SettingsWidget::refreshCameraDevices()
 {
+    // 枚举本机摄像头设备并更新只读设备名称字段。
     const QList<QCameraDevice> cameraDevices =
         QMediaDevices::videoInputs();
 
@@ -250,6 +257,7 @@ void SettingsWidget::refreshCameraDevices()
 void SettingsWidget::applyConfiguration(
     const SystemConfigData &configuration)
 {
+    // 将配置数据映射到对应表单控件。
     pathEdit->setText(configuration.videoSavePath);
 
     const int intervalIndex =
@@ -268,6 +276,7 @@ void SettingsWidget::applyConfiguration(
 
 SystemConfigData SettingsWidget::readConfiguration() const
 {
+    // 从表单控件读取当前系统配置。
     SystemConfigData configuration;
     configuration.videoSavePath = pathEdit->text().trimmed();
     configuration.segmentSeconds =
@@ -285,6 +294,7 @@ SystemConfigData SettingsWidget::readConfiguration() const
 
 SystemConfigData SettingsWidget::createDefaultConfiguration() const
 {
+    // 生成未保存配置时使用的默认路径和通道名称。
     SystemConfigData configuration;
     configuration.videoSavePath =
         QDir(QCoreApplication::applicationDirPath())
@@ -303,6 +313,7 @@ QString SettingsWidget::resultMessage(
     SystemConfigService::Result result,
     const QString &errorMessage) const
 {
+    // 将配置服务结果转换为用户可读的提示文本。
     if (!errorMessage.trimmed().isEmpty()) {
         return errorMessage;
     }
@@ -327,6 +338,7 @@ QString SettingsWidget::resultMessage(
 
 void SettingsWidget::onBrowseClicked()
 {
+    // 选择并显示录像文件保存目录。
     const QString currentPath = pathEdit->text().trimmed();
     const QString directory =
         QFileDialog::getExistingDirectory(
@@ -344,6 +356,7 @@ void SettingsWidget::onBrowseClicked()
 
 void SettingsWidget::onSaveClicked()
 {
+    // 保存当前用户配置并反馈文件或数据库写入结果。
     const SystemConfigData configuration = readConfiguration();
     QString errorMessage;
     const SystemConfigService::Result result =
@@ -382,6 +395,7 @@ void SettingsWidget::onSaveClicked()
 
 void SettingsWidget::onCancelClicked()
 {
+    // 放弃本次表单修改并恢复上次加载的配置。
     applyConfiguration(loadedConfiguration);
     refreshCameraDevices();
     returnToMain();
@@ -389,12 +403,14 @@ void SettingsWidget::onCancelClicked()
 
 void SettingsWidget::returnToMain()
 {
+    // 隐藏设置页并返回主页面。
     WinManager::getInstance()->mainWidget.show();
     hide();
 }
 
 void SettingsWidget::closeEvent(QCloseEvent *event)
 {
+    // 将窗口关闭操作按取消处理，避免页面管理器持有对象被销毁。
     // 点击窗口右上角关闭时，按取消处理
     applyConfiguration(loadedConfiguration);
     refreshCameraDevices();

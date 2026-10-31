@@ -9,6 +9,7 @@
 RecordTask::RecordTask(int recordThreadIndex, const QString &outputDirectory,
                        const QString &username, QObject *parent) : QObject(parent)
 {
+    // 初始化录像线程归属、用户数据模型和逐通道触发状态。
     this->recordThreadIndex = recordThreadIndex;
     this->outputDirectory = outputDirectory;
     videoRecordModel.setCurrentUser(username);
@@ -19,12 +20,14 @@ RecordTask::RecordTask(int recordThreadIndex, const QString &outputDirectory,
 
 void RecordTask::setDetectionService(DetectionService *service)
 {
+    // 关联检测服务，以便录像状态与移动侦测状态协同。
     detectionService = service;
 }
 
 void RecordTask::submitFrame(int channelIndex, cv::Mat rawFrame, cv::Mat markedFrame,
                              int personState, bool allowTrigger)
 {
+    // 缓存最新通道帧，并确保同一录像线程只排入一个处理任务。
     if (channelIndex < 0 || channelIndex >= MaxCaptureThreadCount || rawFrame.empty())
         return;
 
@@ -53,6 +56,7 @@ void RecordTask::submitFrame(int channelIndex, cv::Mat rawFrame, cv::Mat markedF
 
 void RecordTask::processPendingFrames()
 {
+    // 批量取出各通道最新帧，避免处理积压帧造成录制延迟。
     for (int channelIndex = 0; channelIndex < MaxCaptureThreadCount; ++channelIndex) {
         cv::Mat rawFrame;
         cv::Mat markedFrame;
@@ -103,6 +107,7 @@ void RecordTask::processPendingFrames()
 void RecordTask::recordFrame(int channelIndex, const cv::Mat &rawFrame,
                              const cv::Mat &markedFrame, int personState, bool allowTrigger)
 {
+    // 根据目标状态切换普通/移动录像，并写入当前帧和事件截图。
     if (channelIndex < 0 || channelIndex >= MaxCaptureThreadCount || rawFrame.empty())
         return;
     try {
@@ -158,6 +163,7 @@ void RecordTask::recordFrame(int channelIndex, const cv::Mat &rawFrame,
 
 bool RecordTask::startChannelRecord(int channelIndex, const cv::Mat &frame, bool motion)
 {
+    // 创建录像文件并先登记数据库记录，失败时清理未能使用的文件。
     if (!QDir().mkpath(outputDirectory))
         return false;
     const QDateTime startTime = QDateTime::currentDateTime();
@@ -218,6 +224,7 @@ void RecordTask::writeFrame(int channelIndex, const cv::Mat &frame)
 
 void RecordTask::saveEventImage(int channelIndex, const cv::Mat &frame)
 {
+    // 在移动事件开始后的多个时间点保存截图并关联事件与录像记录。
     const int sequence = imageCounts[channelIndex];
     if (sequence >= 3 || segmentTimers[channelIndex].elapsed() < sequence * 500)
         return;
@@ -240,6 +247,7 @@ void RecordTask::saveEventImage(int channelIndex, const cv::Mat &frame)
 
 cv::Mat RecordTask::resizeRecordFrame(const cv::Mat &frame) const
 {
+    // 等比例缩放录像帧并以黑边补齐目标尺寸，避免画面变形或裁切。
     if (frame.empty())
         return cv::Mat();
 
@@ -261,6 +269,7 @@ cv::Mat RecordTask::resizeRecordFrame(const cv::Mat &frame) const
 
 void RecordTask::finishChannelRecord(int channelIndex, int status)
 {
+    // 关闭并校验录像文件，再回写数据库状态、时长和文件大小。
     if (channelIndex < 0 || channelIndex >= MaxCaptureThreadCount)
         return;
     const bool wasMotion = motionModes[channelIndex];
@@ -289,6 +298,7 @@ void RecordTask::finishChannelRecord(int channelIndex, int status)
         QFileInfo videoFile(videoPaths[channelIndex]);
         qulonglong size = videoFile.exists()
             ? static_cast<qulonglong>(videoFile.size()) : 0;
+        // 仅在正常结束且文件非空时重新打开读取首帧，过滤未正确封装的片段。
         if (size > 0 && status == 1) {
             bool playable = false;
             try {
@@ -332,6 +342,7 @@ void RecordTask::finishChannelRecord(int channelIndex, int status)
 
 void RecordTask::setOutputDirectory(const QString &directory)
 {
+    // 切换保存目录前先结束现有片段，避免同一片段跨目录写入。
     if (QDir(directory).absolutePath() == QDir(outputDirectory).absolutePath())
         return;
     finishAllRecords();
@@ -341,6 +352,7 @@ void RecordTask::setOutputDirectory(const QString &directory)
 
 void RecordTask::finishAllRecords()
 {
+    // 处理最后缓存帧后关闭所有通道的录像片段。
     processPendingFrames();
     for (int index = 0; index < MaxCaptureThreadCount; ++index)
         finishChannelRecord(index, 1);

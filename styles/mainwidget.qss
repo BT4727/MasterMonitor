@@ -122,12 +122,30 @@ MainWidget QPushButton[accessibleName="4通道"]:checked:pressed {
     border-color: #086b7e;
 }
 
-/* 保留原生复选框指示器和勾选标记 */
+/* 普通复选框和表格复选框共用深色边框，避免与浅色背景混合 */
 MainWidget QCheckBox {
     color: #31465d;
     spacing: 8px;
     padding: 4px 8px;
     font-size: 14px;
+}
+
+MainWidget QCheckBox::indicator,
+MainWidget QTableWidget::indicator {
+    width: 18px;
+    height: 18px;
+}
+
+MainWidget QCheckBox::indicator:unchecked,
+MainWidget QTableWidget::indicator:unchecked {
+    image: url(:/images/checkbox_unchecked.xpm);
+}
+
+MainWidget QCheckBox::indicator:checked,
+MainWidget QCheckBox::indicator:indeterminate,
+MainWidget QTableWidget::indicator:checked,
+MainWidget QTableWidget::indicator:indeterminate {
+    image: url(:/images/checkbox_checked.xpm);
 }
 
 MainWidget QCheckBox:hover {

@@ -8,6 +8,8 @@
         <file>styles/loginwidget.qss</file>
         <file>images/black_monitor.jpeg</file>
         <file>images/image-fill.png</file>
+        <file>images/checkbox_unchecked.xpm</file>
+        <file>images/checkbox_checked.xpm</file>
         <file>styles/settingswidget.qss</file>
     </qresource>
 </RCC>

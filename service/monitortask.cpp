@@ -14,6 +14,7 @@ MonitorTask::MonitorTask(
     QObject *parent)
     : QObject(parent)
 {
+    // 保存通道、摄像头、占位视频和帧同步资源。
     this->channelIndex = channelIndex;
     this->cameraIndex = cameraIndex;
     this->videoPath = videoPath;
@@ -22,6 +23,7 @@ MonitorTask::MonitorTask(
 
 void MonitorTask::startMonitor()
 {
+    // 持续读取摄像头或占位视频，发布预览帧并将帧异步交给录像线程。
     // 在采集线程中创建、打开和释放。
     cv::VideoCapture camera;
     cv::VideoCapture video;
@@ -155,6 +157,7 @@ void MonitorTask::startMonitor()
 
 void MonitorTask::setRecordEnabled(bool enabled)
 {
+    // 在线程锁保护下切换该采集通道的录像帧发送状态。
     // 等正在发送的录制帧处理完毕，再切换录制状态。
     QMutexLocker<QMutex> locker(&recordMutex);
     recordEnabled = enabled;
@@ -162,12 +165,14 @@ void MonitorTask::setRecordEnabled(bool enabled)
 
 void MonitorTask::setDetectionService(DetectionService *service)
 {
+    // 关联检测服务以提交采集帧并读取检测状态。
     detectionService = service;
 }
 
 bool MonitorTask::openCamera(
     cv::VideoCapture &camera)
 {
+    // 按当前平台的视频后端打开摄像头并设置预览分辨率。
     try {
 #ifdef Q_OS_WIN
         bool opened =
@@ -195,6 +200,7 @@ bool MonitorTask::openCamera(
 bool MonitorTask::openVideo(
     cv::VideoCapture &video)
 {
+    // 使用FFmpeg后端打开该通道对应的占位视频文件。
     if (videoPath.isEmpty()) {
         return false;
     }
@@ -222,6 +228,7 @@ bool MonitorTask::readFrame(
     cv::VideoCapture &source,
     cv::Mat &frame)
 {
+    // 读取一帧并将空帧或底层异常统一视为读取失败。
     try {
         return source.read(frame) && !frame.empty();
     } catch (const std::exception &) {
@@ -232,6 +239,7 @@ bool MonitorTask::readFrame(
 int MonitorTask::getVideoInterval(
     cv::VideoCapture &video)
 {
+    // 根据视频帧率计算播放间隔，异常帧率时使用默认间隔。
     double fps = video.get(cv::CAP_PROP_FPS);
 
     if (!std::isfinite(fps) || fps <= 0) {
@@ -246,6 +254,7 @@ int MonitorTask::getVideoInterval(
 
 void MonitorTask::waitInterval(int milliseconds)
 {
+    // 分段休眠以维持播放节奏，同时及时响应线程停止请求。
     QThread *currentThread = QThread::currentThread();
 
     while (milliseconds > 0

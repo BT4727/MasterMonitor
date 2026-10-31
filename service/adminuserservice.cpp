@@ -3,10 +3,9 @@
 
 #include <QCryptographicHash>
 #include <QDateTime>
-AdminUserService::AdminUserService() {}
-
 QString AdminUserService::calculateMd5(const QString &text) const
 {
+    // 将用户输入密码转换为数据库使用的MD5十六进制摘要。
     const QByteArray textBytes = text.toUtf8();
 
     const QByteArray hashBytes =
@@ -19,7 +18,8 @@ QString AdminUserService::calculateMd5(const QString &text) const
 
 AdminUserService::LoginResult AdminUserService::login(const QString &username, const QString &password) const
 {
-    constexpr int maxLoginErrorTimes = 1;
+    // 校验账户状态、锁定时间和密码，并维护连续登录失败记录。
+    constexpr int maxLoginErrorTimes = 5;
     constexpr int lockSeconds = 30;
 
     AdminUserModel userModel;
@@ -65,6 +65,7 @@ AdminUserService::LoginResult AdminUserService::login(const QString &username, c
     const QString inputPasswordMd5 =
         calculateMd5(password);
 
+    // 比较摘要而非明文，密码本身不会写入日志或数据库查询条件。
     const bool passwordCorrect =
         inputPasswordMd5.compare(
             userRecord.passwordMd5,

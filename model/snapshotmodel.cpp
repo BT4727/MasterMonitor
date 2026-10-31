@@ -5,11 +5,13 @@
 #include <QSqlQuery>
 SnapshotModel::SnapshotModel()
 {
+    // 为图片模型创建独立数据库连接名。
     connectionName = QStringLiteral("snapshot_%1").arg(reinterpret_cast<quintptr>(this), 0, 16);
 }
 
 SnapshotModel::~SnapshotModel()
 {
+    // 关闭并移除该模型持有的数据库连接。
     if (!database.isValid())
         return;
 
@@ -24,11 +26,13 @@ SnapshotModel::~SnapshotModel()
 
 void SnapshotModel::setCurrentUser(const QString &username)
 {
+    // 设置图片关联查询所使用的用户。
     currentUsername = username.trimmed();
 }
 
 bool SnapshotModel::openDatabase(QString &errorMessage)
 {
+    // 创建或打开图片模块专用数据库连接。
     if (!QSqlDatabase::contains(connectionName)) {
         database = QSqlDatabase::addDatabase(
             QStringLiteral("QMYSQL"),
@@ -66,6 +70,7 @@ bool SnapshotModel::insertSnapshot(
     qulonglong &snapshotId,
     QString &errorMessage)
 {
+    // 写入图片元数据以及事件、录像和时间点关联信息。
     snapshotId = 0;
 
     if (!openDatabase(errorMessage))
@@ -133,6 +138,7 @@ bool SnapshotModel::searchSnapshots(
     QVector<SnapshotInfo> &snapshots,
     QString &errorMessage)
 {
+    // 按时间和通道倒序查询图片，并联查关联录像路径。
     snapshots.clear();
 
     if (!openDatabase(errorMessage))
@@ -204,6 +210,7 @@ bool SnapshotModel::searchSnapshots(
 
 bool SnapshotModel::findRelatedVideo(SnapshotInfo &snapshot, QString &errorMessage)
 {
+    // 根据通道和图片时间查找最匹配的录像及其播放偏移。
     if (currentUsername.isEmpty())
         return true;
     if (!openDatabase(errorMessage))
@@ -239,6 +246,7 @@ bool SnapshotModel::deleteSnapshot(
     qulonglong snapshotId,
     QString &errorMessage)
 {
+    // 删除指定图片的数据库记录。
     if (!openDatabase(errorMessage))
         return false;
 

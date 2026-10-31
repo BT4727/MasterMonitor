@@ -8,12 +8,14 @@
 #include <QtSql/QSqlDatabase>
 VideoRecordModel::VideoRecordModel()
 {
+    // 为当前模型实例创建独立的数据库连接名，供其所属线程使用。
     connectionName = QStringLiteral("videoRecord_%1")
     .arg(reinterpret_cast<quintptr>(this), 0, 16);
 }
 
 VideoRecordModel::~VideoRecordModel()
 {
+    // 先释放当前线程的数据库句柄，再移除连接注册项。
     if (threadDatabase.isValid()) {
         QString currentConnectionName =
             threadDatabase.connectionName();
@@ -28,12 +30,14 @@ VideoRecordModel::~VideoRecordModel()
 
 void VideoRecordModel::setCurrentUser(const QString &username)
 {
+    // 限定后续录像读写只访问当前登录用户的数据。
     currentUsername = username.trimmed();
 }
 
 bool VideoRecordModel::openThreadDatabase(
     QString &errorMessage)
 {
+    // 为录像工作线程创建或复用线程本地数据库连接。
     if (threadDatabase.isValid()
         && threadDatabase.isOpen()) {
         return true;
@@ -78,6 +82,7 @@ bool VideoRecordModel::insertRecord(
     qulonglong &recordId,
     QString &errorMessage, qulonglong eventId)
 {
+    // 创建普通录像记录，并确保记录归属当前用户。
     recordId = 0;
 
     if (currentUsername.isEmpty()) {
@@ -136,6 +141,7 @@ bool VideoRecordModel::finishRecord(
     int recordStatus,
     QString &errorMessage)
 {
+    // 更新录像结束信息，并在同一事务中同步异常事件结束时间。
     if (!openThreadDatabase(errorMessage)) {
         return false;
     }
@@ -188,6 +194,7 @@ bool VideoRecordModel::finishRecord(
 
 bool VideoRecordModel::searchRecords(const QDateTime &startTime, const QDateTime &endTime, int channelNo, const QString &recordType, QVector<VideoRecordInfo> &records, QString &errorMessage)
 {
+    // 按用户、时间、通道和录像类型查询录像元数据。
     records.clear();
 
     if (currentUsername.isEmpty()) {
@@ -266,6 +273,7 @@ bool VideoRecordModel::searchRecords(const QDateTime &startTime, const QDateTime
 bool VideoRecordModel::findRecordById(
     qulonglong recordId, VideoRecordInfo &record, QString &errorMessage)
 {
+    // 按录像编号读取当前用户拥有的录像记录。
     record = VideoRecordInfo();
     if (currentUsername.isEmpty() || !openThreadDatabase(errorMessage)) {
         if (errorMessage.isEmpty())
@@ -301,6 +309,7 @@ bool VideoRecordModel::searchPage(const QDateTime &startTime, const QDateTime &e
                                 int page, int pageSize, QVector<VideoRecordInfo> &records,
                                 int &totalCount, QString &errorMessage, const QString &recordType)
 {
+    // 先统计符合条件的录像，再按时间倒序读取指定分页。
     records.clear();
     totalCount = 0;
     if (recordType != QStringLiteral("normal") && recordType != QStringLiteral("motion")) {
@@ -370,6 +379,7 @@ bool VideoRecordModel::insertMotionRecord(
     int channelNo, const QDateTime &startTime, const QString &videoPath,
     qulonglong &eventId, qulonglong &recordId, QString &errorMessage)
 {
+    // 在一个事务中创建异常事件和关联的移动目标录像记录。
     eventId = 0;
     recordId = 0;
     if (currentUsername.isEmpty()) {

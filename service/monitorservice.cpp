@@ -4,6 +4,7 @@
 MonitorService::MonitorService(QObject *parent)
     : QObject{parent}
 {
+    // 初始化每通道线程资源，并建立录像与检测服务之间的协作关系。
     running = false;
 
     qRegisterMetaType<cv::Mat>("cv::Mat");
@@ -25,11 +26,13 @@ MonitorService::MonitorService(QObject *parent)
 
 MonitorService::~MonitorService()
 {
+    // 确保对象销毁时所有采集、处理和录像线程均已停止。
     stopMonitor();
 }
 
 void MonitorService::startMonitor(const QString &videoDirectory)
 {
+    // 为各通道创建采集/处理线程，并连接占位视频与检测服务。
     if (running) {
         return;
     }
@@ -112,6 +115,7 @@ void MonitorService::startMonitor(const QString &videoDirectory)
 
 void MonitorService::initConnect(int channelIndex)
 {
+    // 连接指定通道的线程启动、帧处理和任务对象清理信号。
     connect(
         captureThreads[channelIndex],
         &QThread::started,
@@ -140,6 +144,7 @@ void MonitorService::initConnect(int channelIndex)
 
 void MonitorService::stopMonitor()
 {
+    // 按采集、录像、检测、处理的依赖顺序关闭通道资源。
     if (!running) {
         return;
     }
@@ -189,6 +194,7 @@ void MonitorService::stopMonitor()
 
 void MonitorService::setRecordDirectory(const QString &recordDirectory)
 {
+    // 将新的录像输出目录转交给录像管理器。
     if (recordManager != nullptr) {
         recordManager->setOutputDirectory(
             recordDirectory);
@@ -197,6 +203,7 @@ void MonitorService::setRecordDirectory(const QString &recordDirectory)
 
 void MonitorService::startRecord(const QString &username, const QString &recordDirectory)
 {
+    // 用户登录后按通道启动录像，并将采集任务连接到负载均衡录像线程。
     if (!running || username.trimmed().isEmpty())
         return;
     if (recording && recordingUsername == username) {
@@ -215,6 +222,7 @@ void MonitorService::startRecord(const QString &username, const QString &recordD
 
 void MonitorService::stopRecord()
 {
+    // 停止接收新录像帧，排空录像任务并重置当前用户状态。
     if (!recording)
         return;
     // 禁止新帧提交，再让录像线程排空缓存并关闭当前片段。
@@ -231,6 +239,7 @@ void MonitorService::stopRecord()
 void MonitorService::setDetectionPreview(
     bool singleChannel, int channelIndex, bool detectionEnabled)
 {
+    // 将当前预览模式和移动侦测开关同步到检测服务。
     detectionService->setPreview(singleChannel, channelIndex, detectionEnabled);
 }
 
@@ -238,6 +247,7 @@ void MonitorService::setDetectionPreview(
 QImage MonitorService::getChannelImage(
     int channelIndex)
 {
+    // 返回指定通道最近处理完成的预览图像。
     if (!running
         || channelIndex < 0
         || channelIndex >= ChannelCount) {

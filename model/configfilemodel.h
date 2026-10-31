@@ -6,7 +6,6 @@
 class ConfigFileModel
 {
 public:
-    ConfigFileModel();
     QString configFilePath(const QString &username) const;
 
     bool ensureDirectory(const QString &directoryPath,
